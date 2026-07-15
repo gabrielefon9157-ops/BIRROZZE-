@@ -1,76 +1,75 @@
-# Design System Inspired by Birozze
+# Birozze — Design System v7 "Carta calda & Ocra"
 
-> Category: Social & Lifestyle
-> Una dashboard notturna della serata: la birra al centro come uno schermo di controllo, i dati del gruppo che le orbitano attorno. Conta le bottiglie, colleziona le perle, assegna gli Oscar e decide la prossima serata.
+> Sito goliardico del gruppo vacanze-studio: contatore birre, conti, galleria foto, muro delle perle, Oscar della serata.
+> Stack: HTML/CSS/JS vanilla, nessuna build. Tutto lo stile condiviso vive in `shared.css`.
 
-_Brief generato con la metodologia open-design (nexu-io/open-design): un Seed con colore primario ocra genera la scala a 9 step e i ruoli semantici; il tema è dark-first (omaggio a una dashboard neon), con variante light via token._
+## 1. Tema & Atmosfera
 
-## 1. Visual Theme & Atmosphere
+Leggero, caldo, umano. Fondo color **carta calda** (mai bianco puro), card che galleggiano come piastrelle pastello, un solo giallo ocra come protagonista e un pop arancio-rosso "spritz" usato col contagocce. Ispirazione: dashboard sportive pastello — tanta aria, angoli molto rotondi, ombre morbide, zero effetto "corporate".
 
-Schermo scuro da "sala controllo" della serata: fondo quasi-nero caldo, numeri neon ambra che pulsano, un boccale luminoso al centro con i dati principali disposti tutt'intorno (composizione a soggetto centrale + stat orbitanti). Convivialità notturna, tecnica ma calda, con inserti analogici (post-it, medaglie).
+- **Visual style:** light, pastello, giocoso; annotazioni a mano dove serve un sorriso
+- **Intent:** i numeri della serata leggibili a colpo d'occhio, ma su un foglio caldo, non su uno schermo di controllo
 
-- **Visual style:** dark, neon, dashboard; tattile solo dove serve (post-it)
-- **Color stance:** primary (ochre neon), secondary (spritz), success, danger, plus palette post-it
-- **Design intent:** far leggere a colpo d'occhio i numeri chiave della serata su fondo scuro, con la birra come fulcro luminoso.
+## 2. Palette
 
-## 2. Color
+| Token | Valore | Ruolo |
+|---|---|---|
+| `--amber` | `#E3A320` | Primario — giallo ocra (CTA, link attivi, badge) |
+| `--amber-light` | `#F2C75C` | Hover del primario, gradienti |
+| `--amber-dark` | `#B77E10` | Testo ocra accessibile, label, accenti |
+| `--amber-pale` | `#FBF0D0` | Riempimenti tenui (chip, hover, footer modale) |
+| `--cream` | `#F6F1E3` | **Sfondo pagina** — carta calda |
+| `--cream-deep` | `#EFE7D2` | Sfondi secondari, track progress |
+| `--foam` | `#FFFDF6` | Superficie card / input / nav-pill |
+| `--espresso` | `#2A2318` | Inchiostro caldo (titoli, toast) — mai nero puro |
+| `--espresso-soft` | `#4A3F2C` | Inchiostro secondario |
+| `--copper` | `#E8552F` | Pop "spritz" arancio-rosso — solo accenti fun (kicker, close hover, btn-copper) |
+| `--copper-light` | `#F0764F` | Hover dello spritz |
+| `--text-main / body / soft / mute` | `#2A2318 / #4A4232 / #7C7158 / #A99D82` | Scala testo calda |
+| `--border / --border-dark` | `#E5DCC3 / #C9BC9C` | Bordi caldi 1px / 1.5px |
+| `--mint / --sky / --butter / --blush` | `#DFEBDD / #DEEBF1 / #F7E8B5 / #F6DFD3` | **Pastelli additivi** per card colorate (`.card-mint` ecc.) |
 
-Seed → `colorPrimary = #F2B21C` (ocra birra, resa neon su fondo scuro). Scala a 9 step + ruoli:
+Regole: l'ocra domina, lo spritz è raro e festoso, i pastelli riempiono le card-tile. Neutri sempre caldi, mai grigio puro.
 
-- **Primary / neon:** `#F2B21C` — accento e segnale d'interazione; **neon-bright** `#FFCB3A` per i numeroni luminosi (con glow).
-- **ochre-1 → 9:** `#FDF6E3 · #FBEAC0 · #F6D98C · #EFC24E · #F2B21C · #C6890F · #A06B08 · #7C5106 · #5A3A05`
-- **Secondary (spritz):** `#F0662F` — pop festoso, banner "prossima serata".
-- **Success:** `#3FBE55` · **Danger:** `#EA4C3B` · **Gold (medaglie):** `#FFC53A`
-- **Background:** `#08090A` quasi-nero caldo. **Screen:** `#12100B → #0B0C0A`. **Card:** superfici traslucide `rgba(255,246,224,.035)`.
-- **Text:** `#F1E8D4`; soft `#B6A788`; mute `#7E715A`. **Line:** `rgba(240,214,140,.13)`.
-- **Post-it:** giallo `#FFE07A`, corallo `#FFB59A`, menta `#A6E0A8`, cielo `#9FD2F2`, lilla `#D3B9F0`, rosa `#FBB6D2`.
+## 3. Tipografia
 
-Regole: l'ocra neon domina numeri e accenti (con `text-shadow` glow); lo spritz è il pop secondario; i neutri virano al caldo (mai grigio puro). La variante **light** ridefinisce gli stessi token.
+Google Fonts via `@import` in `shared.css`:
 
-## 3. Typography
+- **Display** `--font-display`: *Bricolage Grotesque* 400–800 — titoli chunky (700–800), letter-spacing stretto (−0.02/−0.03em)
+- **Body/UI** `--font-body`: *Instrument Sans* — testi e controlli
+- **Handwriting** `--font-hand`: *Caveat* 500–700 — annotazioni giocose, kicker dell'hero, perle/citazioni (classe `.hand`)
+- **Numerico** `--font-mono`: *JetBrains Mono*, `tabular-nums` (classe `.num`) per conti e classifiche
 
-- **Display / wordmark:** condensato da etichetta (`Haettenschweiler, Arial Narrow, Oswald, Impact`) per titoli e numeroni.
-- **Body/UI:** system sans (`Segoe UI Variable, system-ui`), pesi 400–800.
-- **Handwriting (perle):** `Bradley Hand, Segoe Print, Comic Sans MS, cursive` per il muro dei ricordi.
-- **Numerico:** tabular-nums per conti e classifiche.
-- Nessun webfont via CDN (CSP): solo stack di sistema.
+## 4. Spaziatura & Forma
 
-## 4. Spacing & Grid
+- **Scala spazi:** xs 4 · sm 8 · md 16/20 · lg 28/36 · xl 48/**72** · xxl 88/**140** (mobile/desktop) — respiro "antigravity"
+- **Contenitore:** `.page-wrap` max-width **1080px**
+- **Raggi:** `--r-sm` 10 · `--r` 14 · `--r-lg` 22 (card) · `--r-xl` 32 (modale) · **99px** per bottoni, chip, badge, nav, toast
+- **Ombre:** `--shadow-xs → xl`, tinta calda `rgba(90,72,32,…)`, opacità bassa, blur ampio — mai dure
 
-- **Scala:** 4/8/12/16/20/28/40. Ritmo verticale costante tra sezioni.
-- Griglie fluide con `gap`, mai margini per-elemento che collassano.
-- Contenuti larghi in contenitori con `overflow-x:auto`.
+## 5. Componenti
 
-## 5. Layout & Composition
+- **Nav** `.topnav`: sticky + blur; i link vivono in una pillola `--foam` con bordo; link attivo = pillola ocra con leggera ombra; brand che si inclina in hover
+- **Bottoni** `.btn`: pillole (99px), padding cicciotto 12×26, peso 700; hover con lift + micro-rotazione (easing molleggiato `cubic-bezier(.34,1.56,.64,1)`); varianti `-primary` (ocra), `-copper` (spritz), `-ghost`, `-outline`
+- **Card** `.card`: superficie foam, raggio 22px, bordo caldo 1px, ombra soffice, lift −4px in hover; varianti pastello additive `.card-mint / -sky / -butter / -blush`
+- **Input** `.input`/`.field`: raggio 14px, focus ring ocra morbido
+- **Progress** `.progress-wrap/-fill`: 10px, track crema, gradiente ocra scuro→chiaro
+- **Chip/Badge/Toast:** tutti a pillola; toast su inchiostro espresso
+- **Modale:** raggio 32px, close a bottoncino rotondo che diventa spritz e ruota
+- **Divider/Footer:** riga **tratteggiata** calda (tocco "quaderno")
+- **Motion:** transizioni 150–300ms, easing molleggiato sui micro-gesti; `@media (prefers-reduced-motion: reduce)` azzera animazioni e transform di hover
 
-- **Hero-dashboard:** soggetto centrale (il boccale luminoso) con le stat della serata disposte a corona — colonna sinistra (titolo + Top 3), boccale al centro, griglia di stat-tile a destra; barra CTA sotto. Omaggio alla composizione "globo + dati intorno".
-- Sotto-nav sticky (Conti · Perle · Oscar · Prossima serata) con contatori vivi.
-- Podio/classifica per il "chi ne ha bevute di più".
+## 6. Voice & Brand
 
-## 6. Components
+- Italiano goliardico ma chiaro: label letterali ("Aggiungi", "Vota"), microcopy che strappa un sorriso senza confondere l'azione
+- La font a mano è la voce degli amici: perle, note, kicker — mai per dati o bottoni
+- Nota **"bevi responsabilmente"** sempre presente (footer)
 
-- **Bottoni:** primario ocra pieno; secondari neutri con bordo caldo su superfici traslucide.
-- **Card bottiglia** (catalogo 30 super alcolici): icona-bottiglia SVG disegnata a mano + nome + **prezzo per bottiglia modificabile inline**; filtri per categoria.
-- **Stat-tile neon:** label minuscola con micro-icona di linea + numero luminoso.
-- **Post-it / candidato Oscar / opzione serata:** raggi e ombre coerenti; barre di voto con leader evidenziato, chip persona selezionabili.
-- Focus-visible sempre esplicito (outline ocra).
+## 7. Anti-pattern
 
-## 7. Iconography & Motion
-
-- **Solo icone SVG di linea disegnate a mano** (bottiglie per categoria, trofeo, pin, utenti…): niente emoji, niente icone dall'aria "AI-generated".
-- Transizioni 150–250ms, ocra come segnale; **glow neon** sui numeri chiave.
-- Micro-feedback: "+1" fluttuante sull'aggiunta, rotazione dei post-it in hover, flash sul voto, timer "serata in corso".
-- Rispetto di `prefers-reduced-motion`.
-
-## 8. Voice & Brand
-
-- Italiano colloquiale, goliardico ma chiaro. Label letterali ("Aggiungi", "Vota").
-- Microcopy che strappa un sorriso senza confondere l'azione.
-- Nota "bevi responsabilmente" sempre presente.
-
-## 9. Anti-patterns
-
-- Niente colori fuori palette quando un token esiste già.
-- Non appiattire la gerarchia (stesso peso/size ovunque).
-- Niente effetti decorativi che riducono leggibilità/accessibilità.
-- Non mischiare metafore visive scollegate nella stessa vista.
+- ❌ Nero puro o bianco puro — sempre `--espresso` e `--foam`/`--cream`
+- ❌ Immagini stock / estetica corporate o "AI-generated"
+- ❌ Ombre dure o scure — solo le `--shadow-*` calde
+- ❌ Colori fuori palette quando esiste un token
+- ❌ Angoli vivi o raggi piccoli sui componenti interattivi
+- ❌ Spritz (`--copper`) ovunque: è un pop, non un secondo primario

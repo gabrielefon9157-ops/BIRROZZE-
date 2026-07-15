@@ -30,7 +30,7 @@
     .oscar-card:hover {
       transform: translateY(-4px);
       box-shadow: var(--shadow-md);
-      border-color: rgba(232,168,53,.4);
+      border-color: rgba(227,163,32,.4);
     }
 
     .oscar-header {
@@ -77,8 +77,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 9px 14px;
-      border-radius: var(--r-sm);
+      padding: 10px 14px;
+      border-radius: var(--r);
       border: 1.5px solid transparent;
       cursor: pointer;
       transition: border-color .2s, transform .2s;
@@ -93,7 +93,7 @@
       position: absolute;
       top: 0; left: 0; bottom: 0;
       background: var(--amber-pale);
-      border-radius: var(--r-sm);
+      border-radius: var(--r);
       width: 0;
       transition: width .8s cubic-bezier(.16,1,.3,1);
       z-index: 1;
@@ -103,7 +103,7 @@
     .oscar-cand-votes {
       font-size: 11.5px;
       font-family: var(--font-mono);
-      background: var(--cream-deep);
+      background: var(--sky);
       border: 1px solid var(--border);
       border-radius: 99px;
       padding: 2px 8px;
@@ -118,31 +118,33 @@
     }
     .add-oscar-form input { flex: 1; }
 
-    /* ---- STATS SUMMARY ---- */
+    /* ---- STATS SUMMARY (light butter band) ---- */
     .oscar-stats {
-      background: var(--espresso);
-      border-radius: var(--r-lg);
-      padding: var(--space-lg);
+      background: var(--butter);
+      border: 1.5px solid rgba(227,163,32,.35);
+      border-radius: var(--r-xl);
+      padding: var(--space-xl) var(--space-lg);
       margin-bottom: var(--space-xl);
       display: flex;
       gap: var(--space-xl);
       flex-wrap: wrap;
       justify-content: center;
+      box-shadow: var(--shadow-xs);
     }
     .oscar-stat-item { text-align: center; }
     .oscar-stat-val {
       font-family: var(--font-mono);
       font-size: 32px;
       font-weight: 700;
-      color: var(--amber-light);
+      color: var(--amber-dark);
       line-height: 1;
     }
     .oscar-stat-lbl {
       font-size: 11.5px;
       text-transform: uppercase;
       letter-spacing: .07em;
-      color: rgba(255,255,255,.4);
-      margin-top: 4px;
+      color: var(--text-soft);
+      margin-top: 6px;
     }
   </style>
 </head>

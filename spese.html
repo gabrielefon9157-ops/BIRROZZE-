@@ -111,25 +111,27 @@
       border-radius: 3px;
       transition: color .15s, background .15s;
     }
-    .expense-table .remove-btn:hover { color: var(--copper); background: rgba(181,84,27,.08); }
+    .expense-table .remove-btn:hover { color: var(--copper); background: rgba(232,85,47,.08); }
 
-    /* ---- DEBTS SIDEBAR ---- */
+    /* ---- DEBTS SIDEBAR (light butter band) ---- */
     .debts-panel {
-      background: var(--espresso);
-      border-radius: var(--r-lg);
-      padding: var(--space-lg);
-      color: var(--cream);
-      box-shadow: var(--shadow-md);
+      background: var(--butter);
+      border: 1.5px solid rgba(227,163,32,.35);
+      border-radius: var(--r-xl);
+      padding: var(--space-xl) var(--space-lg);
+      color: var(--espresso);
+      box-shadow: var(--shadow-sm);
       position: sticky;
       top: 80px;
     }
     .debts-panel-title {
       font-family: var(--font-display);
-      font-size: 20px;
+      font-size: 21px;
       font-weight: 700;
       margin-bottom: 6px;
-      color: var(--cream);
+      color: var(--espresso);
     }
+    .debts-panel-sub { font-size: 12px; color: var(--text-soft); margin-bottom: var(--space-md); }
     .debts-mode-row {
       display: flex;
       gap: 6px;
@@ -137,11 +139,11 @@
     }
     .mode-btn {
       flex: 1;
-      padding: 6px 10px;
-      border-radius: var(--r-sm);
-      border: 1.5px solid rgba(255,255,255,.15);
-      background: rgba(255,255,255,.05);
-      color: rgba(255,255,255,.5);
+      padding: 7px 10px;
+      border-radius: var(--r);
+      border: 1.5px solid var(--border);
+      background: var(--foam);
+      color: var(--text-soft);
       font-size: 11.5px;
       font-weight: 600;
       cursor: pointer;
@@ -149,27 +151,29 @@
     }
     .mode-btn.active {
       border-color: var(--amber);
-      background: rgba(232,168,53,.2);
-      color: var(--amber-light);
+      background: rgba(227,163,32,.18);
+      color: var(--amber-dark);
     }
+    .mode-desc { font-size: 11px; color: var(--text-soft); margin-bottom: var(--space-md); line-height: 1.4; }
 
     .debt-item {
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: var(--r-sm);
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
       padding: 10px 14px;
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 13px;
+      box-shadow: var(--shadow-xs);
     }
-    .debt-item .names { color: rgba(255,255,255,.75); }
-    .debt-item .names b { color: var(--cream); }
+    .debt-item .names { color: var(--text-soft); }
+    .debt-item .names b { color: var(--espresso); }
     .debt-amount {
       font-family: var(--font-mono);
       font-weight: 700;
-      color: var(--amber-light);
+      color: var(--copper);
       font-size: 15px;
     }
 
@@ -177,23 +181,23 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-top: 1px solid rgba(255,255,255,.1);
+      border-top: 1px dashed rgba(227,163,32,.5);
       padding-top: var(--space-md);
       margin-top: var(--space-md);
       font-size: 13px;
-      color: rgba(255,255,255,.5);
+      color: var(--text-soft);
     }
     .debts-total-row .val {
       font-family: var(--font-mono);
       font-size: 20px;
       font-weight: 700;
-      color: var(--amber-light);
+      color: var(--amber-dark);
     }
 
     .balanced-msg {
       text-align: center;
       padding: var(--space-md) 0;
-      color: rgba(255,255,255,.45);
+      color: var(--text-soft);
       font-size: 13.5px;
     }
   </style>
@@ -283,13 +287,13 @@
       <!-- DESTRA: Debiti Panel -->
       <div class="debts-panel fade-up" role="region" aria-label="Riepilogo debiti">
         <div class="debts-panel-title">Resoconto Debiti</div>
-        <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:var(--space-md);">Transazioni minime per pareggiare i conti del gruppo.</p>
+        <p class="debts-panel-sub">Transazioni minime per pareggiare i conti del gruppo.</p>
 
         <div class="debts-mode-row">
           <button class="mode-btn active" id="btnUguale">Divisione Equa</button>
           <button class="mode-btn" id="btnConsumo">A Consumo</button>
         </div>
-        <p id="modeDesc" style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:var(--space-md);line-height:1.4;"></p>
+        <p id="modeDesc" class="mode-desc"></p>
 
         <div id="debtsList"></div>
 

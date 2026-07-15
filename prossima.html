@@ -37,7 +37,7 @@
       gap: var(--space-sm);
       transition: border-color .2s, box-shadow .2s;
     }
-    .proposal-item:hover { border-color: rgba(232,168,53,.4); box-shadow: var(--shadow-sm); }
+    .proposal-item:hover { border-color: rgba(227,163,32,.4); box-shadow: var(--shadow-sm); }
 
     .proposal-bg {
       position: absolute;
@@ -63,14 +63,15 @@
     }
     .add-form input { flex: 1; }
 
-    /* ---- WINNER PANEL ---- */
+    /* ---- WINNER PANEL (light mint band) ---- */
     .winner-panel {
-      background: var(--espresso);
-      border-radius: var(--r-lg);
-      padding: var(--space-lg);
+      background: var(--mint);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--space-xl) var(--space-lg);
       text-align: center;
-      color: var(--cream);
-      box-shadow: var(--shadow-md);
+      color: var(--espresso);
+      box-shadow: var(--shadow-sm);
       position: sticky;
       top: 80px;
     }
@@ -79,23 +80,23 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .12em;
-      color: var(--amber-light);
+      color: var(--amber-dark);
       margin-bottom: var(--space-sm);
     }
     .winner-name {
       font-family: var(--font-display);
       font-size: 26px;
       font-weight: 700;
-      color: var(--cream);
+      color: var(--espresso);
       line-height: 1.2;
       margin-bottom: 8px;
     }
-    .winner-sub { font-size: 13px; color: rgba(255,255,255,.45); }
+    .winner-sub { font-size: 13px; color: var(--text-soft); }
 
     .winner-stamp {
       display: inline-block;
-      border: 2px dashed var(--amber);
-      color: var(--amber);
+      border: 2px dashed var(--copper);
+      color: var(--copper);
       border-radius: var(--r);
       padding: 10px 20px;
       margin: var(--space-md) 0;
@@ -103,7 +104,8 @@
       font-size: 13px;
       letter-spacing: .05em;
       text-transform: uppercase;
-      opacity: .8;
+      transform: rotate(-2deg);
+      opacity: .85;
     }
 
     .random-btn {
@@ -169,7 +171,7 @@
         <div class="winner-name" id="winnerName">Nessun voto</div>
         <div class="winner-stamp" id="winnerStamp" style="display:none;">In programma!</div>
         <div class="winner-sub" id="winnerSub">Votate una proposta per iniziare.</div>
-        <button class="btn btn-outline random-btn" id="randomBtn" style="background:rgba(255,255,255,.06); color:var(--amber-light); border-color:rgba(232,168,53,.4);">
+        <button class="btn btn-outline random-btn" id="randomBtn">
           Scegli a caso (+3 voti)
         </button>
       </div>

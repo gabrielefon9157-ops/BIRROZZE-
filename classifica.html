@@ -42,7 +42,7 @@
     .score-card:hover {
       transform: translateY(-3px);
       box-shadow: var(--shadow-md);
-      border-color: rgba(232,168,53,.4);
+      border-color: rgba(227,163,32,.4);
     }
     /* Rank accent on left */
     .score-card::after {
@@ -53,7 +53,7 @@
       font-family: var(--font-mono);
       font-size: 48px;
       font-weight: 700;
-      color: rgba(232,168,53,.1);
+      color: rgba(227,163,32,.14);
       line-height: 1;
       pointer-events: none;
     }
@@ -73,7 +73,7 @@
     }
     .score-count-badge {
       background: var(--amber-pale);
-      border: 1px solid rgba(232,168,53,.35);
+      border: 1px solid rgba(227,163,32,.35);
       border-radius: 99px;
       padding: 4px 12px;
       font-family: var(--font-mono);
@@ -111,9 +111,9 @@
     }
     .score-drink-chip {
       font-size: 11px;
-      padding: 3px 8px;
+      padding: 3px 9px;
       border-radius: 99px;
-      background: var(--cream-deep);
+      background: var(--butter);
       border: 1px solid var(--border);
       color: var(--text-soft);
       font-family: var(--font-mono);
@@ -146,8 +146,8 @@
       color: var(--text-soft);
     }
     .podio-block {
-      width: 70px;
-      border-radius: var(--r-sm) var(--r-sm) 0 0;
+      width: 74px;
+      border-radius: var(--r) var(--r) 0 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -155,10 +155,12 @@
       font-weight: 900;
       font-size: 20px;
       color: var(--espresso);
+      border: 1.5px solid var(--border);
+      border-bottom: none;
     }
-    .podio-1 .podio-block { height: 90px; background: linear-gradient(180deg, var(--amber-light) 0%, var(--amber) 100%); }
-    .podio-2 .podio-block { height: 65px; background: linear-gradient(180deg, #D9D9D9 0%, #B8B8B8 100%); }
-    .podio-3 .podio-block { height: 48px; background: linear-gradient(180deg, #E8C08A 0%, #C8924A 100%); }
+    .podio-1 .podio-block { height: 92px; background: linear-gradient(180deg, var(--butter) 0%, var(--amber) 100%); border-color: rgba(227,163,32,.45); }
+    .podio-2 .podio-block { height: 66px; background: linear-gradient(180deg, var(--sky) 0%, #C4D9E2 100%); }
+    .podio-3 .podio-block { height: 48px; background: linear-gradient(180deg, var(--blush) 0%, #E9C3AC 100%); }
 
     .section-heading {
       font-family: var(--font-display);

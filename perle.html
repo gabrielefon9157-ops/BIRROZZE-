@@ -69,7 +69,7 @@
       position: relative;
       transform: rotate(var(--rot, 0deg));
       transition: transform .3s cubic-bezier(.175,.885,.32,1.275), box-shadow .3s;
-      box-shadow: 0 4px 14px rgba(30,22,16,.07);
+      box-shadow: 0 4px 14px rgba(42,35,24,.06);
       cursor: default;
       border-radius: 1px;
     }
@@ -88,25 +88,24 @@
     }
     .post-it:hover {
       transform: translateY(-6px) rotate(0deg) scale(1.03);
-      box-shadow: 0 16px 36px rgba(30,22,16,.13);
+      box-shadow: 0 16px 36px rgba(42,35,24,.11);
       z-index: 5;
     }
     .post-it-text {
       font-family: var(--font-hand);
-      font-size: 18px;
+      font-size: 24px;
       font-weight: 700;
-      line-height: 1.35;
-      color: #2C2825;
+      line-height: 1.2;
+      color: var(--espresso);
       word-break: break-word;
     }
     .post-it-author {
       font-family: var(--font-hand);
-      font-size: 13.5px;
+      font-size: 17px;
       text-align: right;
       margin-top: var(--space-md);
-      opacity: .7;
-      font-style: italic;
-      color: #2C2825;
+      opacity: .75;
+      color: var(--espresso);
     }
     .post-it-author::before { content: "— "; }
     .post-it-remove {
