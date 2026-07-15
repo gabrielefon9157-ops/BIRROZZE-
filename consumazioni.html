@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consumazioni — Birozze</title>
+  <meta name="description" content="Segna le bevute della serata e tieni traccia del conto per ogni persona del gruppo.">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ---- PAGE SPECIFICS: CONSUMAZIONI ---- */
+    body { background: var(--cream); }
+
+    /* Person Selector */
+    .person-selector {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: var(--space-lg);
+    }
+    .person-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 99px;
+      border: 2px solid var(--border);
+      background: var(--foam);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-body);
+      cursor: pointer;
+      transition: border-color .18s, background .18s, transform .15s, box-shadow .18s;
+      box-shadow: var(--shadow-xs);
+      position: relative;
+    }
+    .person-pill:hover { border-color: var(--amber-dark); transform: scale(1.03); }
+    .person-pill.active {
+      border-color: var(--amber);
+      background: var(--amber-pale);
+      color: var(--espresso);
+      box-shadow: 0 4px 16px rgba(232,168,53,.2);
+    }
+    .person-pill .count {
+      background: var(--amber);
+      color: var(--espresso);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-family: var(--font-mono);
+    }
+    .person-pill .pill-remove {
+      color: var(--text-mute);
+      font-size: 16px;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color .15s;
+    }
+    .person-pill .pill-remove:hover { color: var(--copper); }
+
+    .add-person-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .add-person-wrap input {
+      width: 120px;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    /* Catalog Toggle */
+    .catalog-toggle {
+      width: 100%;
+      padding: var(--space-md) var(--space-lg);
+      background: var(--foam);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--espresso);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-xs);
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    .catalog-toggle:hover {
+      border-color: var(--amber);
+      background: var(--amber-pale);
+      box-shadow: var(--shadow-sm);
+    }
+    .catalog-toggle-arrow {
+      font-size: 14px;
+      font-family: var(--font-mono);
+      color: var(--amber-dark);
+      transition: transform .25s;
+    }
+    .catalog-toggle.open .catalog-toggle-arrow { transform: rotate(180deg); }
+
+    /* Catalog Grid */
+    .catalog-panel {
+      display: none;
+      margin-top: var(--space-md);
+      padding: var(--space-md);
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow-sm);
+    }
+    .catalog-panel.open { display: block; }
+
+    .cat-filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: var(--space-md);
+    }
+    .cat-filter {
+      padding: 5px 14px;
+      border-radius: 99px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
+      background: var(--cream-deep);
+      color: var(--text-soft);
+      cursor: pointer;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .cat-filter:hover { border-color: var(--amber); color: var(--amber-dark); }
+    .cat-filter.active { background: var(--amber); border-color: var(--amber); color: var(--espresso); }
+
+    .drink-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .drink-tile {
+      background: var(--cream-deep);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: var(--space-md);
+      cursor: pointer;
+      transition: transform .25s cubic-bezier(.16,1,.3,1), border-color .2s, box-shadow .2s, background .2s;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .drink-tile:hover {
+      transform: translateY(-4px);
+      border-color: var(--amber);
+      box-shadow: var(--shadow-md);
+      background: var(--amber-pale);
+    }
+    .drink-tile:active { transform: scale(.97); }
+    .drink-tile-name { font-weight: 700; font-size: 13.5px; color: var(--espresso); }
+    .drink-tile-cat  { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-mute); }
+    .drink-tile-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-dark);
+    }
+    .drink-tile-price-row span { font-size: 11.5px; color: var(--text-soft); }
+    .drink-tile-price-row input {
+      width: 52px;
+      padding: 2px 4px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      text-align: right;
+      border-radius: 3px;
+    }
+    .drink-tile-add {
+      width: 100%;
+      padding: 5px;
+      background: var(--amber);
+      border: none;
+      border-radius: var(--r-sm);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--espresso);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .drink-tile-add:hover { background: var(--amber-dark); color: white; }
+
+    /* Auto expense toggle */
+    .auto-expense-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: var(--space-md);
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+    .auto-expense-row input[type="checkbox"] { accent-color: var(--amber); cursor: pointer; width: 16px; height: 16px; }
+    .auto-expense-row label { cursor: pointer; user-select: none; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <nav class="topnav" role="navigation" aria-label="Navigazione principale">
+    <div class="topnav-inner">
+      <a href="index.html" class="nav-brand">Bir<span>ozze</span></a>
+      <div class="nav-links">
+        <a href="consumazioni.html" class="nav-link" data-page="consumazioni.html">Bevute</a>
+        <a href="classifica.html"    class="nav-link" data-page="classifica.html">Classifica</a>
+        <a href="spese.html"         class="nav-link" data-page="spese.html">Spese</a>
+        <a href="galleria.html"      class="nav-link" data-page="galleria.html">Galleria</a>
+        <a href="perle.html"         class="nav-link" data-page="perle.html">Perle</a>
+        <a href="oscar.html"         class="nav-link" data-page="oscar.html">Oscar</a>
+        <a href="prossima.html"      class="nav-link" data-page="prossima.html">Tappa</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="page-hero">
+    <span class="kicker">Diario Bevute</span>
+    <h1>Consumazioni</h1>
+    <p>Seleziona il tuo profilo, scegli la bottiglia dal catalogo e aggiungi la consumazione al tuo conto serata.</p>
+  </header>
+
+  <main class="page-wrap" id="mainContent">
+
+    <!-- SELETTORE PERSONA -->
+    <section aria-labelledby="who-heading" class="fade-up">
+      <h2 id="who-heading" style="font-size:17px; margin-bottom: var(--space-md);">Chi sei stasera?</h2>
+      <div class="person-selector" id="personSelector"></div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- CATALOGO DRINK -->
+    <section aria-label="Catalogo drink" class="fade-up">
+      <button class="catalog-toggle" id="catalogToggle" aria-expanded="false" aria-controls="catalogPanel">
+        <span>Catalogo Bevande — 30 Super Alcolici</span>
+        <span class="catalog-toggle-arrow">▼</span>
+      </button>
+
+      <div class="catalog-panel" id="catalogPanel" role="region">
+        <div class="auto-expense-row">
+          <input type="checkbox" id="autoExpense" checked>
+          <label for="autoExpense">Addebita automaticamente alla spesa comune stasera</label>
+        </div>
+        <div class="cat-filters" id="catFilters"></div>
+        <div class="drink-grid" id="drinkGrid"></div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- RIEPILOGO PERSONA ATTIVA -->
+    <section aria-labelledby="recap-heading" class="fade-up" id="recapSection">
+      <h2 id="recap-heading" style="font-size:17px; margin-bottom: var(--space-md);">Il tuo conto stasera</h2>
+      <div id="recapContent" style="color: var(--text-soft); font-size: 14px; text-align: center; padding: var(--space-md) 0;">
+        Seleziona il tuo profilo sopra per vedere il riepilogo.
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="page-footer">
+    <div class="page-wrap">
+      Fatto con cura per la vacanza studio &middot; <strong>Birozze v6.0</strong>
+    </div>
+  </footer>
+
+  <div class="toast-container" aria-live="polite"></div>
+
+  <script src="shared.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var BS = window.BirrozzeState;
+    BS.load();
+    BS.markActiveNav();
+    BS.initReveal();
+
+    var state = BS.get();
+    var activePerson = state.crew.length > 0 ? state.crew[0].id : null;
+    var activeFilter = "Tutti";
+    var CATS = ["Tutti", "Whisky", "Vodka", "Gin", "Rum", "Tequila", "Cognac", "Liquori"];
+
+    /* ---- Render Person Selector ---- */
+    function renderPersonSelector() {
+      var state = BS.get();
+      var html = state.crew.map(function (p) {
+        var count = 0; for (var k in p.drinks) count += p.drinks[k];
+        var cls = p.id === activePerson ? "person-pill active" : "person-pill";
+        return '<button class="' + cls + '" data-id="' + p.id + '" aria-pressed="' + (p.id === activePerson ? "true" : "false") + '">' +
+          '<span>' + BS.esc(p.name) + '</span>' +
+          '<span class="count">' + count + '</span>' +
+          '<span class="pill-remove" data-remove="' + p.id + '" title="Rimuovi dal gruppo">×</span>' +
+        '</button>';
+      }).join('');
+
+      html += '<div class="add-person-wrap">' +
+        '<input id="newPersonInput" placeholder="Aggiungi..." maxlength="14" aria-label="Aggiungi nuovo membro">' +
+        '<button class="btn btn-ghost" id="addPersonBtn" style="padding:8px 12px;font-size:12.5px;">+ Aggiungi</button>' +
+      '</div>';
+
+      document.getElementById("personSelector").innerHTML = html;
+    }
+
+    /* ---- Category Filters ---- */
+    function renderCatFilters() {
+      var html = CATS.map(function (c) {
+        return '<button class="cat-filter' + (c === activeFilter ? " active" : "") + '" data-cat="' + c + '">' + c + '</button>';
+      }).join('');
+      document.getElementById("catFilters").innerHTML = html;
+    }
+
+    /* ---- Drink Grid ---- */
+    function renderDrinkGrid() {
+      var catalog = BS.CATALOG.filter(function (d) {
+        return activeFilter === "Tutti" || d.cat === activeFilter;
+      });
+
+      var html = catalog.map(function (d) {
+        return '<div class="drink-tile" data-drink-id="' + d.id + '">' +
+          '<div class="drink-tile-name">' + BS.esc(d.name) + '</div>' +
+          '<div class="drink-tile-cat">' + BS.esc(d.cat) + '</div>' +
+          '<div class="drink-tile-price-row" onclick="event.stopPropagation();">' +
+            '<span>€</span>' +
+            '<input class="price-input" type="number" step="0.5" min="0" data-id="' + d.id + '" value="' + d.price.toFixed(2) + '" aria-label="Prezzo ' + BS.esc(d.name) + '">' +
+          '</div>' +
+          '<button class="drink-tile-add" data-drink-id="' + d.id + '">+ Aggiungi giro</button>' +
+        '</div>';
+      }).join('');
+
+      document.getElementById("drinkGrid").innerHTML = html;
+    }
+
+    /* ---- Recap Persona Attiva ---- */
+    function renderRecap() {
+      var state = BS.get();
+      if (!activePerson) {
+        document.getElementById("recapContent").innerHTML =
+          '<p style="color:var(--text-mute);">Nessun profilo selezionato.</p>';
+        return;
+      }
+      var person = null;
+      for (var i = 0; i < state.crew.length; i++) {
+        if (state.crew[i].id === activePerson) { person = state.crew[i]; break; }
+      }
+      if (!person) return;
+
+      var rows = [];
+      var total = 0;
+      for (var kid in person.drinks) {
+        var drink = BS.getDrinkById(kid);
+        if (!drink) continue;
+        var qty = person.drinks[kid];
+        var subtotal = qty * drink.price;
+        total += subtotal;
+        rows.push({ name: drink.name, cat: drink.cat, qty: qty, price: drink.price, subtotal: subtotal });
+      }
+
+      if (rows.length === 0) {
+        document.getElementById("recapContent").innerHTML =
+          '<p style="color:var(--text-mute); text-align:center; padding: 20px 0;">Nessuna consumazione ancora. Apri il catalogo qui sopra!</p>';
+        return;
+      }
+
+      var html = '<div style="display:grid; gap:8px; margin-bottom: var(--space-md);">';
+      rows.sort(function (a, b) { return b.subtotal - a.subtotal; });
+      rows.forEach(function (r) {
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 14px; background:var(--foam); border:1px solid var(--border); border-radius:var(--r-sm);">' +
+          '<div>' +
+            '<span style="font-weight:600; font-size:14px;">' + BS.esc(r.name) + '</span>' +
+            '<span style="font-size:11px; color:var(--text-mute); margin-left:6px;">' + BS.esc(r.cat) + '</span>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<span class="num" style="font-size:13px; color:var(--text-soft);">' + r.qty + ' × €' + BS.fmt(r.price) + '</span><br>' +
+            '<span class="num" style="font-size:15px; font-weight:700; color:var(--amber-dark);">€' + BS.fmt(r.subtotal) + '</span>' +
+          '</div>' +
+        '</div>';
+      });
+      html += '</div>';
+
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; padding: 14px 16px; background: var(--amber-pale); border: 1.5px solid rgba(232,168,53,.3); border-radius: var(--r);">' +
+        '<span style="font-family: var(--font-display); font-size:18px; font-weight:700; color:var(--espresso);">Totale ' + BS.esc(person.name) + '</span>' +
+        '<span class="num" style="font-size:22px; font-weight:700; color:var(--amber-dark);">€' + BS.fmt(total) + '</span>' +
+      '</div>';
+
+      document.getElementById("recapContent").innerHTML = html;
+    }
+
+    /* ---- Event Delegation ---- */
+
+    // Selezione persona / rimozione
+    document.getElementById("personSelector").addEventListener("click", function (e) {
+      // Rimuovi persona
+      var removeBtn = e.target.closest("[data-remove]");
+      if (removeBtn) {
+        e.stopPropagation();
+        var rid = removeBtn.getAttribute("data-remove");
+        var personName = "";
+        BS.get().crew.forEach(function (p) { if (p.id === rid) personName = p.name; });
+        if (confirm("Rimuovere " + personName + " dal gruppo?")) {
+          var state = BS.get();
+          state.crew = state.crew.filter(function (p) { return p.id !== rid; });
+          if (activePerson === rid) activePerson = state.crew.length > 0 ? state.crew[0].id : null;
+          BS.save();
+          renderPersonSelector();
+          renderRecap();
+        }
+        return;
+      }
+
+      // Seleziona persona
+      var pill = e.target.closest("[data-id]");
+      if (pill && !e.target.closest("[data-remove]")) {
+        activePerson = pill.getAttribute("data-id");
+        renderPersonSelector();
+        renderRecap();
+      }
+
+      // Aggiungi persona
+      if (e.target.id === "addPersonBtn") {
+        var input = document.getElementById("newPersonInput");
+        var val = input.value.trim();
+        if (!val) return;
+        var newId = val.toLowerCase().replace(/[^a-z0-9]/g, "") || BS.uid();
+        var state = BS.get();
+        var exists = false;
+        state.crew.forEach(function (p) { if (p.id === newId) exists = true; });
+        if (!exists) {
+          state.crew.push({ id: newId, name: val, drinks: {}, is_active: true });
+          BS.save();
+          activePerson = newId;
+          input.value = "";
+          renderPersonSelector();
+          renderRecap();
+        }
+      }
+    });
+
+    // Supporto Enter per aggiunta persona
+    document.getElementById("personSelector").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.id === "newPersonInput") {
+        var btn = document.getElementById("addPersonBtn");
+        if (btn) btn.click();
+      }
+    });
+
+    // Catalogo: filtri
+    document.getElementById("catFilters").addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-cat]");
+      if (btn) {
+        activeFilter = btn.getAttribute("data-cat");
+        renderCatFilters();
+        renderDrinkGrid();
+      }
+    });
+
+    // Catalogo: aggiunta drink
+    document.getElementById("drinkGrid").addEventListener("click", function (e) {
+      var addBtn = e.target.closest(".drink-tile-add");
+      if (!addBtn) return;
+
+      var did = addBtn.getAttribute("data-drink-id");
+      var drink = BS.getDrinkById(did);
+      if (!drink) return;
+
+      if (!activePerson) { alert("Seleziona prima il tuo profilo!"); return; }
+
+      var state = BS.get();
+      var person = null;
+      state.crew.forEach(function (p) { if (p.id === activePerson) person = p; });
+      if (!person) return;
+
+      person.drinks[did] = (person.drinks[did] || 0) + 1;
+
+      // Addebito automatico se checkbox spuntata
+      if (document.getElementById("autoExpense").checked) {
+        var activePids = state.crew.filter(function (p) { return p.is_active; }).map(function (p) { return p.id; });
+        if (activePids.length > 0) {
+          state.expenses.push({
+            id: BS.uid(),
+            desc: drink.name + " (" + person.name + ")",
+            amount: drink.price,
+            paidBy: person.id,
+            splitAmong: activePids
+          });
+        }
+      }
+
+      BS.save();
+      renderPersonSelector();
+      renderRecap();
+      BS.toast("+" + drink.name + " aggiunto al conto di " + person.name);
+    });
+
+    // Modifica prezzo
+    document.getElementById("drinkGrid").addEventListener("change", function (e) {
+      if (e.target.classList.contains("price-input")) {
+        var did = e.target.getAttribute("data-id");
+        var val = BS.parseP(e.target.value);
+        var drink = BS.getDrinkById(did);
+        if (drink) {
+          drink.price = val;
+          e.target.value = val.toFixed(2);
+        }
+      }
+    });
+
+    // Toggle catalogo
+    document.getElementById("catalogToggle").addEventListener("click", function () {
+      var toggle = this;
+      var panel = document.getElementById("catalogPanel");
+      var isOpen = panel.classList.toggle("open");
+      toggle.classList.toggle("open", isOpen);
+      toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+
+    /* ---- Init ---- */
+    renderPersonSelector();
+    renderCatFilters();
+    renderDrinkGrid();
+    renderRecap();
+
+  })();
+  </script>
+</body>
+</html>

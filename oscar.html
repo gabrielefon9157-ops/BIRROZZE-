@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oscar della Vacanza — Birozze</title>
+  <meta name="description" content="Vota i compagni di viaggio per i premi più divertenti della vacanza studio. Aggiornamento live.">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { background: var(--cream); }
+
+    /* ---- OSCAR GRID ---- */
+    .oscar-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+    }
+    @media (min-width: 620px) { .oscar-grid { grid-template-columns: 1fr 1fr; } }
+
+    .oscar-card {
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s, border-color .2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .oscar-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(232,168,53,.4);
+    }
+
+    .oscar-header {
+      padding: var(--space-md) var(--space-lg);
+      background: var(--amber-pale);
+      border-bottom: 1px solid var(--border);
+      border-top: 3px solid var(--amber);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .oscar-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--espresso);
+      letter-spacing: -0.01em;
+    }
+    .oscar-leader {
+      flex-shrink: 0;
+      background: var(--amber);
+      color: var(--espresso);
+      border-radius: 99px;
+      padding: 3px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+
+    .oscar-candidates {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .oscar-row {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px;
+      border-radius: var(--r-sm);
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: border-color .2s, transform .2s;
+      background: transparent;
+      width: 100%;
+      font-family: inherit;
+      text-align: left;
+    }
+    .oscar-row:hover { border-color: var(--border-dark); transform: translateX(4px); }
+    .oscar-row:active { transform: translateX(4px) scale(.98); }
+    .oscar-row-bg {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      background: var(--amber-pale);
+      border-radius: var(--r-sm);
+      width: 0;
+      transition: width .8s cubic-bezier(.16,1,.3,1);
+      z-index: 1;
+    }
+    .oscar-row > * { position: relative; z-index: 2; }
+    .oscar-cand-name { font-weight: 500; font-size: 14px; color: var(--text-body); }
+    .oscar-cand-votes {
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      background: var(--cream-deep);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 2px 8px;
+      color: var(--text-soft);
+    }
+
+    /* ---- ADD OSCAR FORM ---- */
+    .add-oscar-form {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-xl);
+    }
+    .add-oscar-form input { flex: 1; }
+
+    /* ---- STATS SUMMARY ---- */
+    .oscar-stats {
+      background: var(--espresso);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-xl);
+      display: flex;
+      gap: var(--space-xl);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .oscar-stat-item { text-align: center; }
+    .oscar-stat-val {
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--amber-light);
+      line-height: 1;
+    }
+    .oscar-stat-lbl {
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: rgba(255,255,255,.4);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <nav class="topnav" role="navigation" aria-label="Navigazione principale">
+    <div class="topnav-inner">
+      <a href="index.html" class="nav-brand">Bir<span>ozze</span></a>
+      <div class="nav-links">
+        <a href="consumazioni.html" class="nav-link" data-page="consumazioni.html">Bevute</a>
+        <a href="classifica.html"    class="nav-link" data-page="classifica.html">Classifica</a>
+        <a href="spese.html"         class="nav-link" data-page="spese.html">Spese</a>
+        <a href="galleria.html"      class="nav-link" data-page="galleria.html">Galleria</a>
+        <a href="perle.html"         class="nav-link" data-page="perle.html">Perle</a>
+        <a href="oscar.html"         class="nav-link" data-page="oscar.html">Oscar</a>
+        <a href="prossima.html"      class="nav-link" data-page="prossima.html">Tappa</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="page-hero">
+    <span class="kicker">Premi &amp; Riconoscimenti</span>
+    <h1>Oscar della Vacanza</h1>
+    <p>Vota i tuoi compagni di viaggio per i premi più divertenti della serata. La classifica si aggiorna in tempo reale.</p>
+  </header>
+
+  <main class="page-wrap">
+
+    <!-- STATS BAR -->
+    <div class="oscar-stats fade-up" id="oscarStats" aria-label="Statistiche Oscar"></div>
+
+    <!-- OSCAR CARDS -->
+    <section aria-label="Categorie Oscar" class="fade-up">
+      <div class="oscar-grid" id="oscarGrid"></div>
+    </section>
+
+    <!-- ADD CATEGORY -->
+    <div class="add-oscar-form fade-up">
+      <input type="text" id="newOscarInput" placeholder="Crea una nuova categoria Oscar..." maxlength="60" aria-label="Nuova categoria Oscar">
+      <button class="btn btn-primary" id="addOscarBtn">Crea</button>
+    </div>
+
+  </main>
+
+  <footer class="page-footer">
+    <div class="page-wrap">Fatto con cura per la vacanza studio &middot; <strong>Birozze v6.0</strong></div>
+  </footer>
+
+  <div class="toast-container" aria-live="polite"></div>
+
+  <script src="shared.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var BS = window.BirrozzeState;
+    BS.load();
+    BS.markActiveNav();
+    BS.initReveal();
+
+    /* ---- Stats ---- */
+    function renderStats() {
+      var state = BS.get();
+      var totalVotes = 0;
+      var catCount   = state.oscars.length;
+
+      state.oscars.forEach(function (o) {
+        for (var pid in o.votes) totalVotes += o.votes[pid];
+      });
+
+      // Find most decorated person
+      var tally = {};
+      state.crew.forEach(function (p) { tally[p.id] = 0; });
+      state.oscars.forEach(function (o) {
+        var maxV = 0, leadId = null;
+        for (var pid in o.votes) {
+          if (o.votes[pid] > maxV) { maxV = o.votes[pid]; leadId = pid; }
+        }
+        if (leadId) tally[leadId] = (tally[leadId] || 0) + 1;
+      });
+      var mvpId = null, mvpWins = 0;
+      for (var pid in tally) { if (tally[pid] > mvpWins) { mvpWins = tally[pid]; mvpId = pid; } }
+      var mvpName = "—";
+      state.crew.forEach(function (p) { if (p.id === mvpId) mvpName = p.name; });
+
+      document.getElementById("oscarStats").innerHTML =
+        '<div class="oscar-stat-item">' +
+          '<div class="oscar-stat-val">' + catCount + '</div>' +
+          '<div class="oscar-stat-lbl">Categorie</div>' +
+        '</div>' +
+        '<div class="oscar-stat-item">' +
+          '<div class="oscar-stat-val">' + totalVotes + '</div>' +
+          '<div class="oscar-stat-lbl">Voti totali</div>' +
+        '</div>' +
+        '<div class="oscar-stat-item">' +
+          '<div class="oscar-stat-val">' + BS.esc(mvpName) + '</div>' +
+          '<div class="oscar-stat-lbl">Più premiato</div>' +
+        '</div>';
+    }
+
+    /* ---- Oscar Grid ---- */
+    function renderOscars() {
+      var state = BS.get();
+
+      var html = state.oscars.map(function (o) {
+        var tot = 0, leadId = null, leadV = 0;
+        for (var pid in o.votes) {
+          tot += o.votes[pid];
+          if (o.votes[pid] > leadV) { leadV = o.votes[pid]; leadId = pid; }
+        }
+
+        var leaderName = "—";
+        state.crew.forEach(function (p) { if (p.id === leadId) leaderName = p.name; });
+
+        var rows = state.crew.map(function (p) {
+          var v   = o.votes[p.id] || 0;
+          var pct = tot > 0 ? (v / tot * 100) : 0;
+          return '<button class="oscar-row" data-oscar="' + o.id + '" data-cand="' + p.id + '">' +
+            '<div class="oscar-row-bg" style="width:' + pct + '%"></div>' +
+            '<span class="oscar-cand-name">' + BS.esc(p.name) + '</span>' +
+            '<span class="oscar-cand-votes">' + v + ' voti</span>' +
+          '</button>';
+        }).join('');
+
+        return '<div class="oscar-card fade-up">' +
+          '<div class="oscar-header">' +
+            '<div class="oscar-title">' + BS.esc(o.title) + '</div>' +
+            '<div class="oscar-leader">' + BS.esc(leaderName) + '</div>' +
+          '</div>' +
+          '<div class="oscar-candidates">' + rows + '</div>' +
+        '</div>';
+      }).join('');
+
+      document.getElementById("oscarGrid").innerHTML = html || '<p style="text-align:center;color:var(--text-mute);grid-column:1/-1;padding:40px 0;">Nessuna categoria Oscar ancora. Creane una qui sotto!</p>';
+
+      BS.initReveal();
+    }
+
+    /* ---- Events ---- */
+    document.getElementById("oscarGrid").addEventListener("click", function (e) {
+      var btn = e.target.closest(".oscar-row");
+      if (!btn) return;
+      var oscarId = btn.getAttribute("data-oscar");
+      var candId  = btn.getAttribute("data-cand");
+      var state   = BS.get();
+      state.oscars.forEach(function (o) {
+        if (o.id === oscarId) o.votes[candId] = (o.votes[candId] || 0) + 1;
+      });
+      BS.save();
+      renderOscars();
+      renderStats();
+
+      var name = "";
+      state.crew.forEach(function (p) { if (p.id === candId) name = p.name; });
+      BS.toast("Voto per " + name + " registrato!");
+    });
+
+    document.getElementById("addOscarBtn").addEventListener("click", function () {
+      var val = document.getElementById("newOscarInput").value.trim();
+      if (!val) return;
+      var state = BS.get();
+      state.oscars.push({ id: BS.uid(), title: val, votes: {} });
+      BS.save();
+      document.getElementById("newOscarInput").value = "";
+      renderOscars();
+      renderStats();
+    });
+
+    document.getElementById("newOscarInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") document.getElementById("addOscarBtn").click();
+    });
+
+    /* ---- Init ---- */
+    renderStats();
+    renderOscars();
+
+  })();
+  </script>
+</body>
+</html>

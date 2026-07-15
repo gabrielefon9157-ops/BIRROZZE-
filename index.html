@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Birozze — Il Taccuino della Vacanza Studio</title>
+  <meta name="description" content="Birozze è il taccuino digitale condiviso per custodire ricordi, dividere le spese e organizzare le serate della vacanza studio.">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ======================================================
+       INDEX.HTML — Home Page Premium
+       Stile "Birrificio Artigianale" sexy e graficamente ricco
+       ====================================================== */
+
+    /* ---- HERO ---- */
+    .hero {
+      position: relative;
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px var(--space-md) 60px;
+      overflow: hidden;
+    }
+
+    /* Sfondo a onde ambrate animate */
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(232,168,53,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 15% 80%, rgba(181,84,27,.10) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 90%, rgba(232,168,53,.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Rumore texturale sottile */
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: .5;
+    }
+
+    .hero-content { position: relative; z-index: 2; }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      border-radius: 99px;
+      border: 1px solid rgba(232,168,53,.35);
+      background: rgba(232,168,53,.08);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--amber-dark);
+      margin-bottom: 28px;
+      animation: fadeUp .7s .1s cubic-bezier(.16,1,.3,1) both;
+    }
+    .hero-eyebrow::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      animation: pulse 1.6s infinite;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(52px, 10vw, 112px);
+      font-weight: 900;
+      color: var(--espresso);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      margin-bottom: 28px;
+      animation: fadeUp .8s .2s cubic-bezier(.16,1,.3,1) both;
+    }
+    .hero-title .highlight {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--amber-dark);
+      text-stroke: 2px var(--amber-dark);
+    }
+    @media (min-width: 768px) {
+      .hero-title .highlight {
+        -webkit-text-stroke: 3px var(--amber-dark);
+      }
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: var(--text-soft);
+      max-width: 520px;
+      margin: 0 auto 40px;
+      line-height: 1.55;
+      font-weight: 300;
+      animation: fadeUp .8s .35s cubic-bezier(.16,1,.3,1) both;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      animation: fadeUp .8s .48s cubic-bezier(.16,1,.3,1) both;
+    }
+    @media (min-width: 480px) { .hero-cta-row { flex-direction: row; justify-content: center; } }
+
+    .cta-main {
+      padding: 15px 36px;
+      font-size: 15px;
+      border-radius: var(--r);
+      background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+      color: var(--espresso);
+      font-weight: 700;
+      box-shadow: 0 6px 24px rgba(232,168,53,.35), 0 2px 6px rgba(0,0,0,.08);
+      border: none;
+      letter-spacing: 0.02em;
+      transition: transform .2s, box-shadow .2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cta-main:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 36px rgba(232,168,53,.45), 0 4px 12px rgba(0,0,0,.1);
+    }
+
+    .cta-secondary {
+      padding: 14px 28px;
+      border-radius: var(--r);
+      border: 1.5px solid var(--border-dark);
+      background: transparent;
+      color: var(--text-body);
+      font-size: 14px;
+      font-weight: 600;
+      transition: border-color .18s, color .18s, background .18s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cta-secondary:hover { border-color: var(--amber); color: var(--amber-dark); background: var(--amber-pale); }
+
+    /* Separator animato */
+    .hero-separator {
+      position: absolute;
+      bottom: 0;
+      left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--cream-deep));
+    }
+
+    /* ---- LIVE STATS BAR ---- */
+    .stats-bar {
+      background: var(--espresso);
+      color: var(--cream);
+      padding: var(--space-md) 0;
+      overflow: hidden;
+    }
+    .stats-bar-inner {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      flex-wrap: wrap;
+      gap: 0;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+    .stat-item {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px 20px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,.1);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,.45); margin-bottom: 4px; }
+    .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 600; color: var(--amber-light); line-height: 1; }
+    .stat-value small { font-size: 13px; font-weight: 400; color: rgba(255,255,255,.5); margin-left: 2px; }
+
+    /* ---- FEATURE GRID ---- */
+    .features-section {
+      padding: var(--space-xxl) 0;
+      background: var(--cream-deep);
+    }
+    .features-title-block {
+      text-align: center;
+      margin-bottom: var(--space-xl);
+    }
+    .features-title-block h2 {
+      font-size: clamp(28px, 5vw, 44px);
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-sm);
+    }
+    .features-title-block p { color: var(--text-soft); font-size: 16px; max-width: 480px; margin: 0 auto; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .feature-card {
+      display: block;
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease, border-color .2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--amber-dark), var(--amber));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .35s cubic-bezier(.16,1,.3,1);
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(232,168,53,.4);
+    }
+    .feature-card:hover::before { transform: scaleX(1); }
+
+    .feature-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--r);
+      background: var(--amber-pale);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: var(--space-md);
+      border: 1px solid rgba(232,168,53,.2);
+    }
+    .feature-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--espresso);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .feature-desc {
+      color: var(--text-soft);
+      font-size: 13.5px;
+      line-height: 1.5;
+      margin-bottom: var(--space-md);
+    }
+    .feature-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--amber-dark);
+      transition: gap .2s;
+    }
+    .feature-card:hover .feature-arrow { gap: 8px; }
+
+    /* ---- WHO ARE WE SECTION ---- */
+    .crew-section {
+      padding: var(--space-xxl) 0;
+      background: var(--cream);
+    }
+    .crew-grid {
+      display: flex;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: var(--space-xl);
+    }
+    .crew-card {
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 10px 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow-xs);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .crew-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .crew-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--amber-light), var(--amber-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--espresso);
+      flex-shrink: 0;
+    }
+    .crew-info { display: flex; flex-direction: column; }
+    .crew-name { font-weight: 700; font-size: 14px; color: var(--espresso); }
+    .crew-drinks { font-size: 11.5px; color: var(--text-soft); font-family: var(--font-mono); }
+
+    /* ---- MARQUEE TICKER ---- */
+    .ticker-wrap {
+      background: var(--amber);
+      padding: 10px 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-inner {
+      display: inline-block;
+      animation: ticker 22s linear infinite;
+    }
+    .ticker-inner span {
+      display: inline-block;
+      padding: 0 40px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--espresso);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ---- PERLA HIGHLIGHT ---- */
+    .perla-section {
+      padding: var(--space-xxl) 0;
+      background: var(--espresso);
+      text-align: center;
+    }
+    .perla-quote {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 4vw, 38px);
+      font-style: italic;
+      color: var(--cream);
+      max-width: 680px;
+      margin: 0 auto var(--space-md);
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+    .perla-author {
+      font-size: 14px;
+      color: var(--amber-light);
+      font-weight: 600;
+    }
+
+    /* ---- TIMER SECTION ---- */
+    .timer-section {
+      padding: var(--space-xl) 0;
+      background: var(--cream-deep);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .timer-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+    }
+    @media (min-width: 560px) { .timer-block { flex-direction: row; justify-content: center; } }
+    .timer-units {
+      display: flex;
+      gap: var(--space-md);
+      align-items: baseline;
+    }
+    .timer-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .timer-digit {
+      font-family: var(--font-mono);
+      font-size: 48px;
+      font-weight: 600;
+      color: var(--espresso);
+      line-height: 1;
+      min-width: 72px;
+      text-align: center;
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 8px 12px;
+    }
+    .timer-unit-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-mute);
+      margin-top: 6px;
+    }
+    .timer-sep {
+      font-family: var(--font-mono);
+      font-size: 36px;
+      color: var(--amber);
+      margin-bottom: 18px;
+    }
+
+    /* Responsive: su mobile accorcia la topnav */
+    @media (max-width: 540px) {
+      .nav-link { padding: 5px 8px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <nav class="topnav" role="navigation" aria-label="Navigazione principale">
+    <div class="topnav-inner">
+      <a href="index.html" class="nav-brand">Bir<span>ozze</span></a>
+      <div class="nav-links">
+        <a href="consumazioni.html" class="nav-link" data-page="consumazioni.html">Bevute</a>
+        <a href="classifica.html"    class="nav-link" data-page="classifica.html">Classifica</a>
+        <a href="spese.html"         class="nav-link" data-page="spese.html">Spese</a>
+        <a href="galleria.html"      class="nav-link" data-page="galleria.html">Galleria</a>
+        <a href="perle.html"         class="nav-link" data-page="perle.html">Perle</a>
+        <a href="oscar.html"         class="nav-link" data-page="oscar.html">Oscar</a>
+        <a href="prossima.html"      class="nav-link" data-page="prossima.html">Tappa</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Vacanza Studio 2026 — Diario Condiviso</div>
+      <h1 class="hero-title" id="hero-heading">
+        Bir<span class="highlight">ozze</span>
+      </h1>
+      <p class="hero-sub">
+        Registra le bevute, dividi le spese, appendi i ricordi sul muro.<br>
+        Il taccuino digitale del gruppo — nessuna app da installare.
+      </p>
+      <div class="hero-cta-row">
+        <a href="consumazioni.html" class="cta-main">
+          Apri il Taccuino
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="galleria.html" class="cta-secondary">
+          Guarda i Ricordi
+        </a>
+      </div>
+    </div>
+    <div class="hero-separator"></div>
+  </section>
+
+  <!-- LIVE STATS BAR -->
+  <div class="stats-bar" role="region" aria-label="Statistiche in tempo reale">
+    <div class="stats-bar-inner">
+      <div class="stat-item">
+        <div class="stat-label">Consumazioni</div>
+        <div class="stat-value" id="statDrinks">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Conto Serata</div>
+        <div class="stat-value">€<span id="statBill">0,00</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Debiti aperti</div>
+        <div class="stat-value">€<span id="statDebts">0,00</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Ricordi Fotografici</div>
+        <div class="stat-value" id="statPhotos">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Perle Scritte</div>
+        <div class="stat-value" id="statPerle">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker-inner">
+      <span>Birozze</span><span>•</span>
+      <span>Dividi le Spese</span><span>•</span>
+      <span>Appendi i Ricordi</span><span>•</span>
+      <span>Vota gli Oscar</span><span>•</span>
+      <span>Pianifica la Prossima Tappa</span><span>•</span>
+      <span>Birozze</span><span>•</span>
+      <span>Dividi le Spese</span><span>•</span>
+      <span>Appendi i Ricordi</span><span>•</span>
+      <span>Vota gli Oscar</span><span>•</span>
+      <span>Pianifica la Prossima Tappa</span><span>•</span>
+    </div>
+  </div>
+
+  <!-- TIMER SERATA -->
+  <section class="timer-section" aria-label="Timer della serata">
+    <div class="page-wrap">
+      <div class="timer-block">
+        <div style="text-align:center;">
+          <span class="section-label">Timer Serata</span>
+          <div style="font-family: var(--font-display); font-size: 17px; color: var(--text-soft); margin-top: 4px;" id="timerStatus">in attesa di avvio</div>
+        </div>
+        <div class="timer-units">
+          <div class="timer-unit">
+            <div class="timer-digit" id="tH">0</div>
+            <div class="timer-unit-label">Ore</div>
+          </div>
+          <div class="timer-sep">:</div>
+          <div class="timer-unit">
+            <div class="timer-digit" id="tM">00</div>
+            <div class="timer-unit-label">Minuti</div>
+          </div>
+          <div class="timer-sep">:</div>
+          <div class="timer-unit">
+            <div class="timer-digit" id="tS">00</div>
+            <div class="timer-unit-label">Secondi</div>
+          </div>
+        </div>
+        <div style="display:flex; gap: 8px;">
+          <button class="btn btn-primary" id="timerBtn">Avvia Serata</button>
+          <button class="btn btn-ghost" id="timerResetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES GRID -->
+  <section class="features-section" aria-labelledby="features-heading">
+    <div class="page-wrap">
+      <div class="features-title-block fade-up">
+        <span class="section-label">Tutte le Funzioni</span>
+        <h2 id="features-heading">Ogni ricordo, al suo posto.</h2>
+        <p>Ogni sezione è una pagina dedicata, pensata per essere rapida da usare anche con lo schermo dello smartphone in verticale.</p>
+      </div>
+
+      <div class="features-grid">
+        <a href="consumazioni.html" class="feature-card fade-up">
+          <div class="feature-icon">🍺</div>
+          <div class="feature-name">Consumazioni</div>
+          <div class="feature-desc">Scegli chi sei e aggiungi al tuo conto le bottiglie dal catalogo di 30 super alcolici. I prezzi sono modificabili.</div>
+          <div class="feature-arrow">Vai alla pagina →</div>
+        </a>
+
+        <a href="classifica.html" class="feature-card fade-up">
+          <div class="feature-icon">🏆</div>
+          <div class="feature-name">Classifica Spugne</div>
+          <div class="feature-desc">La classifica in tempo reale di chi sta bevendo di più. Con barre animate e spesa stimata per persona.</div>
+          <div class="feature-arrow">Vai alla pagina →</div>
+        </a>
+
+        <a href="spese.html" class="feature-card fade-up">
+          <div class="feature-icon">💶</div>
+          <div class="feature-name">Spese &amp; Debiti</div>
+          <div class="feature-desc">Registra taxi, pizze, spesa al market. L'algoritmo Splitwise calcola chi deve dare a chi e quanto in modo minimale.</div>
+          <div class="feature-arrow">Vai alla pagina →</div>
+        </a>
+
+        <a href="galleria.html" class="feature-card fade-up">
+          <div class="feature-icon">📸</div>
+          <div class="feature-name">Galleria Polaroid</div>
+          <div class="feature-desc">Carica le foto della serata e guardala trasformarsi in una parete di Polaroid vintage, con didascalia e data.</div>
+          <div class="feature-arrow">Vai alla pagina →</div>
+        </a>
+
+        <a href="perle.html" class="feature-card fade-up">
+          <div class="feature-icon">📝</div>
+          <div class="feature-name">Muro delle Perle</div>
+          <div class="feature-desc">Le battute memorabili, le gaffe e i tormentoni della vacanza, appesi sul muro come post-it colorati.</div>
+          <div class="feature-arrow">Vai alla pagina →</div>
+        </a>
+
+        <a href="oscar.html" class="feature-card fade-up">
+          <div class="feature-icon">🎬</div>
+          <div class="feature-name">Oscar della Vacanza</div>
+          <div class="feature-desc">Vota i compagni di viaggio per i premi più divertenti. Classifica live con barre animate per ogni categoria.</div>
+          <div class="feature-arrow">Vai alla pagina →</div>
+        </a>
+
+        <a href="prossima.html" class="feature-card fade-up">
+          <div class="feature-icon">🗺️</div>
+          <div class="feature-name">Prossima Tappa</div>
+          <div class="feature-desc">Proponi mete per la prossima serata e votale insieme. In caso di parità, fai scegliere Birozze a caso!</div>
+          <div class="feature-arrow">Vai alla pagina →</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CREW SECTION -->
+  <section class="crew-section" aria-labelledby="crew-heading">
+    <div class="page-wrap">
+      <div class="features-title-block fade-up">
+        <span class="section-label">Il Gruppo</span>
+        <h2 id="crew-heading">Chi c'è stasera?</h2>
+        <p>I partecipanti attuali della vacanza studio. Gestiscili dalla pagina Consumazioni.</p>
+      </div>
+      <div class="crew-grid" id="crewGrid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- PERLA IN EVIDENZA -->
+  <section class="perla-section" aria-label="Perla in evidenza">
+    <div class="page-wrap">
+      <div class="section-label" style="color: var(--amber-light); margin-bottom: var(--space-md);">Perla della Serata</div>
+      <div class="perla-quote fade-up" id="heroPerla">
+        "Una serata da ricordare comincia sempre con un brindisi."
+      </div>
+      <div class="perla-author fade-up" id="heroPerlAuthor">— Birozze</div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="page-footer">
+    <div class="page-wrap">
+      Fatto con cura per la compagnia della vacanza studio &middot; <strong>Birozze v6.0</strong>
+    </div>
+  </footer>
+
+  <script src="shared.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var BS = window.BirrozzeState;
+    BS.load();
+    BS.markActiveNav();
+    BS.initReveal();
+
+    var state = BS.get();
+
+    /* ---- Statistiche Header ---- */
+    function updateStats() {
+      var state = BS.get();
+      var calc  = BS.calculateSettlements();
+
+      document.getElementById("statDrinks").textContent = BS.totalDrinks();
+      document.getElementById("statBill").textContent   = BS.fmt(calc.grandTotal);
+      document.getElementById("statDebts").textContent  = BS.fmt(calc.totalVolume);
+      document.getElementById("statPhotos").textContent = state.photos.length;
+      document.getElementById("statPerle").textContent  = state.perle.length;
+    }
+
+    /* ---- Crew Grid ---- */
+    function renderCrew() {
+      var state = BS.get();
+      var html = state.crew.map(function (p) {
+        var initial = p.name.charAt(0).toUpperCase();
+        var count = 0; for (var k in p.drinks) count += p.drinks[k];
+        return '<div class="crew-card">' +
+          '<div class="crew-avatar">' + BS.esc(initial) + '</div>' +
+          '<div class="crew-info">' +
+            '<div class="crew-name">' + BS.esc(p.name) + '</div>' +
+            '<div class="crew-drinks">' + count + ' consumazioni</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      document.getElementById("crewGrid").innerHTML = html;
+    }
+
+    /* ---- Perla in Evidenza ---- */
+    function renderHeroPerla() {
+      var state = BS.get();
+      if (state.perle.length > 0) {
+        var p = state.perle[Math.floor(Math.random() * state.perle.length)];
+        document.getElementById("heroPerla").textContent = '"' + p.text + '"';
+        document.getElementById("heroPerlAuthor").textContent = "— " + p.author;
+      }
+    }
+
+    /* ---- Timer ---- */
+    var timerInterval = null;
+
+    function padZ(n) { return n < 10 ? "0" + n : String(n); }
+
+    function paintTimer() {
+      var s = BS.get();
+      document.getElementById("tH").textContent = Math.floor(s.elapsed / 3600);
+      document.getElementById("tM").textContent = padZ(Math.floor((s.elapsed % 3600) / 60));
+      document.getElementById("tS").textContent = padZ(s.elapsed % 60);
+    }
+
+    function syncTimer() {
+      var s = BS.get();
+      var btn = document.getElementById("timerBtn");
+      var lbl = document.getElementById("timerStatus");
+
+      if (s.running) {
+        btn.textContent = "Pausa Serata";
+        lbl.textContent = "serata in corso";
+        lbl.style.color = "var(--amber-dark)";
+        if (!timerInterval) {
+          timerInterval = setInterval(function () {
+            BS.update({ elapsed: BS.get().elapsed + 1 });
+            paintTimer();
+          }, 1000);
+        }
+      } else {
+        btn.textContent = "Avvia Serata";
+        lbl.textContent = s.elapsed > 0 ? "serata in pausa" : "in attesa di avvio";
+        lbl.style.color = "var(--text-soft)";
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+      }
+    }
+
+    document.getElementById("timerBtn").addEventListener("click", function () {
+      BS.update({ running: !BS.get().running });
+      syncTimer();
+    });
+
+    document.getElementById("timerResetBtn").addEventListener("click", function () {
+      if (confirm("Azzerare il timer della serata?")) {
+        BS.update({ elapsed: 0, running: false });
+        clearInterval(timerInterval); timerInterval = null;
+        syncTimer();
+        paintTimer();
+      }
+    });
+
+    /* ---- Init ---- */
+    updateStats();
+    renderCrew();
+    renderHeroPerla();
+    paintTimer();
+    syncTimer();
+
+  })();
+  </script>
+</body>
+</html>

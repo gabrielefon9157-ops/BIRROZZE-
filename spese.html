@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spese &amp; Debiti — Birozze</title>
+  <meta name="description" content="Registra le spese comuni e scopri chi deve dare soldi a chi con l'algoritmo Splitwise di Birozze.">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { background: var(--cream); }
+
+    /* ---- LAYOUT ---- */
+    .split-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+      align-items: start;
+    }
+    @media (min-width: 780px) {
+      .split-layout { grid-template-columns: 1fr 320px; }
+    }
+
+    /* ---- FORM PANEL ---- */
+    .form-panel {
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .form-panel h2 {
+      font-size: 19px;
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--border);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-sm);
+    }
+
+    /* ---- PARTICIPANTS ---- */
+    .participants-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: var(--space-md);
+    }
+    .participant-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1.5px solid var(--border);
+      background: var(--foam);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-soft);
+      transition: border-color .18s, background .18s, color .18s;
+      user-select: none;
+    }
+    .participant-toggle input[type="checkbox"] { accent-color: var(--amber); }
+    .participant-toggle:has(input:checked) {
+      border-color: var(--amber);
+      background: var(--amber-pale);
+      color: var(--espresso);
+    }
+
+    /* ---- EXPENSE TABLE ---- */
+    .expense-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-xs);
+    }
+    .expense-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--foam);
+      font-size: 13.5px;
+    }
+    .expense-table th {
+      padding: 10px 14px;
+      text-align: left;
+      background: var(--amber-pale);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber-dark);
+      border-bottom: 1px solid var(--border);
+    }
+    .expense-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .expense-table tbody tr:last-child td { border-bottom: none; }
+    .expense-table tbody tr:hover { background: var(--cream-deep); }
+    .expense-table .amount { font-family: var(--font-mono); font-weight: 700; color: var(--espresso); }
+    .expense-table .remove-btn {
+      background: none;
+      border: none;
+      color: var(--text-mute);
+      cursor: pointer;
+      font-size: 15px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      transition: color .15s, background .15s;
+    }
+    .expense-table .remove-btn:hover { color: var(--copper); background: rgba(181,84,27,.08); }
+
+    /* ---- DEBTS SIDEBAR ---- */
+    .debts-panel {
+      background: var(--espresso);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      color: var(--cream);
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 80px;
+    }
+    .debts-panel-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--cream);
+    }
+    .debts-mode-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: var(--space-md);
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 6px 10px;
+      border-radius: var(--r-sm);
+      border: 1.5px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.5);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .18s, background .18s, color .18s;
+    }
+    .mode-btn.active {
+      border-color: var(--amber);
+      background: rgba(232,168,53,.2);
+      color: var(--amber-light);
+    }
+
+    .debt-item {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--r-sm);
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .debt-item .names { color: rgba(255,255,255,.75); }
+    .debt-item .names b { color: var(--cream); }
+    .debt-amount {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--amber-light);
+      font-size: 15px;
+    }
+
+    .debts-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255,255,255,.1);
+      padding-top: var(--space-md);
+      margin-top: var(--space-md);
+      font-size: 13px;
+      color: rgba(255,255,255,.5);
+    }
+    .debts-total-row .val {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--amber-light);
+    }
+
+    .balanced-msg {
+      text-align: center;
+      padding: var(--space-md) 0;
+      color: rgba(255,255,255,.45);
+      font-size: 13.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <nav class="topnav" role="navigation" aria-label="Navigazione principale">
+    <div class="topnav-inner">
+      <a href="index.html" class="nav-brand">Bir<span>ozze</span></a>
+      <div class="nav-links">
+        <a href="consumazioni.html" class="nav-link" data-page="consumazioni.html">Bevute</a>
+        <a href="classifica.html"    class="nav-link" data-page="classifica.html">Classifica</a>
+        <a href="spese.html"         class="nav-link" data-page="spese.html">Spese</a>
+        <a href="galleria.html"      class="nav-link" data-page="galleria.html">Galleria</a>
+        <a href="perle.html"         class="nav-link" data-page="perle.html">Perle</a>
+        <a href="oscar.html"         class="nav-link" data-page="oscar.html">Oscar</a>
+        <a href="prossima.html"      class="nav-link" data-page="prossima.html">Tappa</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="page-hero">
+    <span class="kicker">Contabilità di Gruppo</span>
+    <h1>Spese &amp; Debiti</h1>
+    <p>Registra taxi, cena, spesa al market. L'algoritmo Splitwise calcola le transazioni minime per pareggiare i conti.</p>
+  </header>
+
+  <main class="page-wrap">
+
+    <div class="split-layout">
+
+      <!-- SINISTRA: Form + Tabella -->
+      <div style="display:flex;flex-direction:column;gap:var(--space-lg);">
+
+        <!-- Chi partecipa -->
+        <div class="form-panel fade-up">
+          <h2>Partecipanti di stasera</h2>
+          <p style="font-size:13px;color:var(--text-soft);margin-bottom:var(--space-md);">Le spese comuni vengono divise tra chi ha la spunta accesa.</p>
+          <div class="participants-grid" id="participantsGrid"></div>
+        </div>
+
+        <!-- Aggiungi spesa -->
+        <div class="form-panel fade-up">
+          <h2>Registra una Spesa</h2>
+          <form id="expenseForm" style="display:flex;flex-direction:column;gap:var(--space-md);">
+            <div class="field">
+              <label for="expDesc">Descrizione</label>
+              <input type="text" id="expDesc" placeholder="Es. Pizze d'asporto, Market..." required>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="expAmount">Importo (€)</label>
+                <input type="number" id="expAmount" step="0.01" min="0.01" placeholder="0,00" required>
+              </div>
+              <div class="field">
+                <label for="expPayer">Pagato da</label>
+                <select id="expPayer"></select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;">Salva Spesa</button>
+          </form>
+        </div>
+
+        <!-- Tabella Registro -->
+        <div class="fade-up">
+          <h2 style="font-family:var(--font-display);font-size:19px;margin-bottom:var(--space-md);color:var(--espresso);">Registro Spese</h2>
+          <div class="expense-table-wrap">
+            <table class="expense-table">
+              <thead>
+                <tr>
+                  <th>Spesa</th>
+                  <th>€</th>
+                  <th>Pagato da</th>
+                  <th>Diviso tra</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="expenseTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DESTRA: Debiti Panel -->
+      <div class="debts-panel fade-up" role="region" aria-label="Riepilogo debiti">
+        <div class="debts-panel-title">Resoconto Debiti</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:var(--space-md);">Transazioni minime per pareggiare i conti del gruppo.</p>
+
+        <div class="debts-mode-row">
+          <button class="mode-btn active" id="btnUguale">Divisione Equa</button>
+          <button class="mode-btn" id="btnConsumo">A Consumo</button>
+        </div>
+        <p id="modeDesc" style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:var(--space-md);line-height:1.4;"></p>
+
+        <div id="debtsList"></div>
+
+        <div class="debts-total-row">
+          <span>Movimento totale</span>
+          <span class="val">€<span id="totalDebt">0,00</span></span>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="page-footer">
+    <div class="page-wrap">Fatto con cura per la vacanza studio &middot; <strong>Birozze v6.0</strong></div>
+  </footer>
+
+  <script src="shared.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var BS = window.BirrozzeState;
+    BS.load();
+    BS.markActiveNav();
+    BS.initReveal();
+
+    /* ---- Participants Checkboxes ---- */
+    function renderParticipants() {
+      var state = BS.get();
+      var html = state.crew.map(function (p) {
+        var checked = p.is_active ? "checked" : "";
+        return '<label class="participant-toggle">' +
+          '<input type="checkbox" class="active-toggle" data-id="' + p.id + '" ' + checked + '>' +
+          BS.esc(p.name) +
+        '</label>';
+      }).join('');
+      document.getElementById("participantsGrid").innerHTML = html;
+    }
+
+    /* ---- Payer Options ---- */
+    function updatePayerOptions() {
+      var state = BS.get();
+      var html = state.crew.map(function (p) {
+        return '<option value="' + p.id + '">' + BS.esc(p.name) + '</option>';
+      }).join('');
+      document.getElementById("expPayer").innerHTML = html;
+    }
+
+    /* ---- Expense Table ---- */
+    function renderExpenseTable() {
+      var state = BS.get();
+      if (state.expenses.length === 0) {
+        document.getElementById("expenseTableBody").innerHTML =
+          '<tr><td colspan="5" style="text-align:center;color:var(--text-mute);padding:24px;">Nessuna spesa registrata ancora.</td></tr>';
+        return;
+      }
+
+      var html = state.expenses.map(function (e) {
+        var payerName = "";
+        state.crew.forEach(function (p) { if (p.id === e.paidBy) payerName = p.name; });
+        var participants = (e.splitAmong || []).map(function (pid) {
+          var n = ""; state.crew.forEach(function (p) { if (p.id === pid) n = p.name; }); return n;
+        }).filter(Boolean).join(", ");
+        return '<tr>' +
+          '<td><b>' + BS.esc(e.desc) + '</b></td>' +
+          '<td class="amount">€' + BS.fmt(e.amount) + '</td>' +
+          '<td>' + BS.esc(payerName) + '</td>' +
+          '<td style="font-size:12px;color:var(--text-soft);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + BS.esc(participants) + '">' + BS.esc(participants) + '</td>' +
+          '<td><button class="remove-btn" data-id="' + e.id + '" title="Rimuovi spesa">×</button></td>' +
+        '</tr>';
+      }).join('');
+
+      document.getElementById("expenseTableBody").innerHTML = html;
+    }
+
+    /* ---- Debts Panel ---- */
+    function renderDebts() {
+      var state = BS.get();
+      var calc = BS.calculateSettlements();
+
+      var html = "";
+      if (calc.settlements.length === 0) {
+        html = '<div class="balanced-msg">Tutti i conti sono in pareggio!</div>';
+      } else {
+        html = calc.settlements.map(function (s) {
+          return '<div class="debt-item">' +
+            '<div class="names"><b>' + BS.esc(s.from) + '</b> → <b>' + BS.esc(s.to) + '</b></div>' +
+            '<div class="debt-amount">€' + BS.fmt(s.amount) + '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      document.getElementById("debtsList").innerHTML = html;
+      document.getElementById("totalDebt").textContent = BS.fmt(calc.totalVolume);
+
+      var modeDesc = {
+        "uguale": "Il costo totale delle bevande è diviso equamente tra i partecipanti attivi stasera.",
+        "consumo": "Ognuno paga ciò che ha effettivamente ordinato — nessun ribilanciamento sull'alcol."
+      };
+      document.getElementById("modeDesc").textContent = modeDesc[state.alcoholSplitMode] || "";
+    }
+
+    /* ---- Events ---- */
+
+    // Participants toggle
+    document.getElementById("participantsGrid").addEventListener("change", function (e) {
+      if (e.target.classList.contains("active-toggle")) {
+        var id = e.target.getAttribute("data-id");
+        var state = BS.get();
+        state.crew.forEach(function (p) { if (p.id === id) p.is_active = e.target.checked; });
+        BS.save();
+        renderDebts();
+      }
+    });
+
+    // Expense form
+    document.getElementById("expenseForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var desc   = document.getElementById("expDesc").value.trim();
+      var amount = BS.parseP(document.getElementById("expAmount").value);
+      var payer  = document.getElementById("expPayer").value;
+
+      if (!desc || amount <= 0) return;
+
+      var state = BS.get();
+      var activePids = state.crew.filter(function (p) { return p.is_active; }).map(function (p) { return p.id; });
+      if (activePids.length === 0) {
+        alert("Attiva almeno un partecipante per dividere la spesa!");
+        return;
+      }
+
+      state.expenses.push({ id: BS.uid(), desc: desc, amount: amount, paidBy: payer, splitAmong: activePids });
+      BS.save();
+      document.getElementById("expDesc").value = "";
+      document.getElementById("expAmount").value = "";
+      renderExpenseTable();
+      renderDebts();
+      BS.toast("Spesa \"" + desc + "\" aggiunta!");
+    });
+
+    // Remove expense
+    document.getElementById("expenseTableBody").addEventListener("click", function (e) {
+      var btn = e.target.closest(".remove-btn");
+      if (btn) {
+        var id = btn.getAttribute("data-id");
+        var state = BS.get();
+        state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
+        BS.save();
+        renderExpenseTable();
+        renderDebts();
+      }
+    });
+
+    // Mode buttons
+    document.getElementById("btnUguale").addEventListener("click", function () {
+      BS.update({ alcoholSplitMode: "uguale" });
+      document.getElementById("btnUguale").classList.add("active");
+      document.getElementById("btnConsumo").classList.remove("active");
+      renderDebts();
+    });
+    document.getElementById("btnConsumo").addEventListener("click", function () {
+      BS.update({ alcoholSplitMode: "consumo" });
+      document.getElementById("btnConsumo").classList.add("active");
+      document.getElementById("btnUguale").classList.remove("active");
+      renderDebts();
+    });
+
+    /* ---- Init ---- */
+    var state = BS.get();
+    if (state.alcoholSplitMode === "consumo") {
+      document.getElementById("btnConsumo").classList.add("active");
+      document.getElementById("btnUguale").classList.remove("active");
+    }
+
+    renderParticipants();
+    updatePayerOptions();
+    renderExpenseTable();
+    renderDebts();
+
+  })();
+  </script>
+</body>
+</html>

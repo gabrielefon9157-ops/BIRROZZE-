@@ -1,0 +1,20 @@
+# Server locale temporaneo
+*.pyc
+__pycache__/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+
+# Node (per eventuali tool futuri)
+node_modules/
+.env
+.env.local

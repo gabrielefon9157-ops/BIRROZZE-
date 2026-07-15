@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classifica Spugne — Birozze</title>
+  <meta name="description" content="Classifica in tempo reale di chi beve di più nel gruppo durante la vacanza studio.">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { background: var(--cream); }
+
+    .search-bar { max-width: 380px; margin: 0 auto var(--space-lg); position: relative; }
+    .search-bar input { width: 100%; padding-left: 40px; }
+    .search-bar::before {
+      content: "⌕";
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: var(--text-mute);
+      pointer-events: none;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+    @media (min-width: 600px) { .scoreboard { grid-template-columns: 1fr 1fr; } }
+
+    .score-card {
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: transform .25s, box-shadow .25s, border-color .2s;
+    }
+    .score-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(232,168,53,.4);
+    }
+    /* Rank accent on left */
+    .score-card::after {
+      content: attr(data-rank);
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      font-family: var(--font-mono);
+      font-size: 48px;
+      font-weight: 700;
+      color: rgba(232,168,53,.1);
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .score-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-md);
+    }
+    .score-name {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--espresso);
+      letter-spacing: -0.01em;
+    }
+    .score-count-badge {
+      background: var(--amber-pale);
+      border: 1px solid rgba(232,168,53,.35);
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--amber-dark);
+    }
+
+    .score-bar-wrap {
+      margin-bottom: 10px;
+    }
+    .score-bar-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .score-spend {
+      font-size: 12.5px;
+      color: var(--text-soft);
+      margin-top: 8px;
+    }
+    .score-spend b {
+      color: var(--espresso);
+      font-family: var(--font-mono);
+    }
+
+    .score-drinks-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: var(--space-sm);
+    }
+    .score-drink-chip {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 99px;
+      background: var(--cream-deep);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      font-family: var(--font-mono);
+    }
+
+    /* Podio top 3 */
+    .podio-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+    .podio-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .podio-name {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--espresso);
+      text-align: center;
+    }
+    .podio-count {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-soft);
+    }
+    .podio-block {
+      width: 70px;
+      border-radius: var(--r-sm) var(--r-sm) 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 20px;
+      color: var(--espresso);
+    }
+    .podio-1 .podio-block { height: 90px; background: linear-gradient(180deg, var(--amber-light) 0%, var(--amber) 100%); }
+    .podio-2 .podio-block { height: 65px; background: linear-gradient(180deg, #D9D9D9 0%, #B8B8B8 100%); }
+    .podio-3 .podio-block { height: 48px; background: linear-gradient(180deg, #E8C08A 0%, #C8924A 100%); }
+
+    .section-heading {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--espresso);
+      margin-bottom: var(--space-md);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <nav class="topnav" role="navigation" aria-label="Navigazione principale">
+    <div class="topnav-inner">
+      <a href="index.html" class="nav-brand">Bir<span>ozze</span></a>
+      <div class="nav-links">
+        <a href="consumazioni.html" class="nav-link" data-page="consumazioni.html">Bevute</a>
+        <a href="classifica.html"    class="nav-link" data-page="classifica.html">Classifica</a>
+        <a href="spese.html"         class="nav-link" data-page="spese.html">Spese</a>
+        <a href="galleria.html"      class="nav-link" data-page="galleria.html">Galleria</a>
+        <a href="perle.html"         class="nav-link" data-page="perle.html">Perle</a>
+        <a href="oscar.html"         class="nav-link" data-page="oscar.html">Oscar</a>
+        <a href="prossima.html"      class="nav-link" data-page="prossima.html">Tappa</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="page-hero">
+    <span class="kicker">Statistiche Serata</span>
+    <h1>Classifica Spugne</h1>
+    <p>Chi sta bevendo di più stasera? Barre animate e spesa stimata in tempo reale per ogni membro del gruppo.</p>
+  </header>
+
+  <main class="page-wrap">
+
+    <!-- SEARCH -->
+    <div class="search-bar fade-up">
+      <input type="search" id="searchInput" placeholder="Cerca un amico..." aria-label="Cerca nella classifica">
+    </div>
+
+    <!-- PODIO TOP 3 -->
+    <div class="podio-row fade-up" id="podioRow" aria-label="Podio top 3"></div>
+
+    <!-- SCOREBOARD CARDS -->
+    <section aria-labelledby="scoreboard-heading">
+      <h2 class="section-heading" id="scoreboard-heading" style="text-align:center;">Classifica Completa</h2>
+      <div class="scoreboard" id="scoreboard"></div>
+    </section>
+
+  </main>
+
+  <footer class="page-footer">
+    <div class="page-wrap">Fatto con cura per la vacanza studio &middot; <strong>Birozze v6.0</strong></div>
+  </footer>
+
+  <script src="shared.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var BS = window.BirrozzeState;
+    BS.load();
+    BS.markActiveNav();
+    BS.initReveal();
+
+    var searchFilter = "";
+
+    function getPersonCount(p) {
+      var c = 0; for (var k in p.drinks) c += p.drinks[k]; return c;
+    }
+    function getPersonSpend(p) {
+      var s = 0;
+      for (var k in p.drinks) {
+        var d = BS.getDrinkById(k); if (d) s += p.drinks[k] * d.price;
+      }
+      return s;
+    }
+
+    /* ---- Render Podio ---- */
+    function renderPodio(sorted) {
+      var top3 = sorted.slice(0, 3);
+      if (top3.length < 2) { document.getElementById("podioRow").innerHTML = ""; return; }
+
+      // Ordine visivo: 2° - 1° - 3°
+      var order = [top3[1], top3[0], top3[2]].filter(Boolean);
+      var classes = ["podio-2", "podio-1", "podio-3"];
+      var labels  = ["2°", "1°", "3°"];
+
+      var html = order.map(function (p, i) {
+        var count = getPersonCount(p);
+        return '<div class="podio-item ' + classes[i] + '">' +
+          '<div class="podio-name">' + BS.esc(p.name) + '</div>' +
+          '<div class="podio-count">' + count + ' bott.</div>' +
+          '<div class="podio-block">' + labels[i] + '</div>' +
+        '</div>';
+      }).join('');
+
+      document.getElementById("podioRow").innerHTML = html;
+    }
+
+    /* ---- Render Scoreboard ---- */
+    function renderScoreboard() {
+      var state = BS.get();
+      var sorted = state.crew.slice().sort(function (a, b) {
+        return getPersonCount(b) - getPersonCount(a);
+      });
+
+      if (searchFilter) {
+        sorted = sorted.filter(function (p) {
+          return p.name.toLowerCase().indexOf(searchFilter.toLowerCase()) > -1;
+        });
+      }
+
+      var maxCount = Math.max(1, getPersonCount(sorted[0] || { drinks: {} }));
+
+      renderPodio(sorted);
+
+      var html = sorted.map(function (p, i) {
+        var count   = getPersonCount(p);
+        var spend   = getPersonSpend(p);
+        var pct     = (count / maxCount) * 100;
+
+        // Lista drink
+        var drinksHtml = "";
+        for (var kid in p.drinks) {
+          var d = BS.getDrinkById(kid);
+          if (d) drinksHtml += '<span class="score-drink-chip">' + BS.esc(d.name) + ' ×' + p.drinks[kid] + '</span>';
+        }
+
+        return '<div class="score-card fade-up" data-rank="' + (i + 1) + '">' +
+          '<div class="score-top">' +
+            '<div class="score-name">' + BS.esc(p.name) + '</div>' +
+            '<div class="score-count-badge">' + count + ' bott.</div>' +
+          '</div>' +
+          '<div class="score-bar-wrap">' +
+            '<div class="score-bar-label">' +
+              '<span>' + (i + 1) + 'º posto</span>' +
+              '<span>' + Math.round(pct) + '%</span>' +
+            '</div>' +
+            '<div class="progress-wrap">' +
+              '<div class="progress-fill score-bar" data-width="' + pct + '"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="score-spend">Spesa stimata: <b>€' + BS.fmt(spend) + '</b></div>' +
+          (drinksHtml ? '<div class="score-drinks-list">' + drinksHtml + '</div>' : '') +
+        '</div>';
+      }).join('');
+
+      document.getElementById("scoreboard").innerHTML = html ||
+        '<p style="color:var(--text-mute); text-align:center; grid-column:1/-1;">Nessun risultato trovato.</p>';
+
+      // Anima barre
+      setTimeout(function () {
+        document.querySelectorAll(".score-bar").forEach(function (el) {
+          el.style.width = el.getAttribute("data-width") + "%";
+        });
+        BS.initReveal();
+      }, 60);
+    }
+
+    /* ---- Events ---- */
+    document.getElementById("searchInput").addEventListener("input", function (e) {
+      searchFilter = e.target.value;
+      renderScoreboard();
+    });
+
+    /* ---- Init ---- */
+    renderScoreboard();
+
+  })();
+  </script>
+</body>
+</html>
