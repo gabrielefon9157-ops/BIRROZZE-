@@ -798,21 +798,6 @@
               '<div style="text-align:center;margin:12px 0;font-size:12px;color:var(--text-mute);font-weight:700;">OPPURE</div>' +
               '<button class="btn btn-outline" id="btnCreateGroup" style="width:100%;padding:11px;font-weight:700;">Crea Nuovo Gruppo Condiviso</button>' +
             '</div>' +
-            '<hr style="border:none;border-top:1.5px dashed var(--border);margin:8px 0;">' +
-            '<details style="font-size:12.5px;">' +
-              '<summary style="cursor:pointer;color:var(--text-soft);font-weight:600;user-select:none;">Database Supabase (Avanzate)</summary>' +
-              '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:10px;background:var(--cream);border-radius:var(--r-sm);">' +
-                '<div class="field">' +
-                  '<label style="font-size:11px;">Supabase URL</label>' +
-                  '<input type="text" id="dbUrl" placeholder="https://xyz.supabase.co..." style="padding:6px;font-size:12px;">' +
-                '</div>' +
-                '<div class="field">' +
-                  '<label style="font-size:11px;">Supabase Anon Key</label>' +
-                  '<input type="password" id="dbKey" placeholder="eyJhbGciOiJIUzI1Ni..." style="padding:6px;font-size:12px;">' +
-                '</div>' +
-                '<button class="btn btn-primary" id="btnSaveDbConfig" style="padding:6px;font-size:12px;align-self:flex-end;">Salva Configurazione</button>' +
-              '</div>' +
-            '</details>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -826,9 +811,6 @@
     // Click pillola navbar -> apri modal
     pill.addEventListener("click", function() {
       var gid = getActiveGroupId();
-      var conf = getSupabaseConfig();
-      document.getElementById("dbUrl").value = conf.supabaseUrl || "";
-      document.getElementById("dbKey").value = conf.supabaseKey || "";
 
       if (gid) {
         document.getElementById("groupActiveInfo").style.display = "block";
@@ -849,31 +831,12 @@
       if (e.target === overlay) closeModal();
     });
 
-    // Salva configurazione DB avanzata
-    document.getElementById("btnSaveDbConfig").addEventListener("click", function() {
-      var url = document.getElementById("dbUrl").value.trim();
-      var key = document.getElementById("dbKey").value.trim();
-      if (!url || !key) {
-        alert("Inserisci sia l'URL che la chiave pubblica.");
-        return;
-      }
-      saveSupabaseConfig(url, key);
-      ensureSupabaseSdk(function() {
-        if (initSupabase()) {
-          toast("Database collegato correttamente!");
-          updatePill();
-        } else {
-          alert("Errore durante l'inizializzazione del client Supabase.");
-        }
-      });
-    });
-
     // Entra nel gruppo
     document.getElementById("btnJoinGroup").addEventListener("click", function() {
       var code = document.getElementById("joinGroupCode").value.trim().toUpperCase();
       if (!code) return;
       if (!sb) {
-        alert("Configura prima le credenziali di Supabase nella sezione avanzata!");
+        alert("Impossibile connettersi al database. Ricarica la pagina o verifica la connessione internet.");
         return;
       }
       setActiveGroupId(code);
@@ -887,7 +850,7 @@
     // Crea gruppo
     document.getElementById("btnCreateGroup").addEventListener("click", async function() {
       if (!sb) {
-        alert("Configura prima le credenziali di Supabase nella sezione avanzata!");
+        alert("Impossibile connettersi al database. Ricarica la pagina o verifica la connessione internet.");
         return;
       }
       var btn = this;
