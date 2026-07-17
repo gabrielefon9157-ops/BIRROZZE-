@@ -596,6 +596,72 @@
     @media (max-width: 540px) {
       .nav-link { padding: 5px 8px; font-size: 12px; }
     }
+
+    /* ---- Drinking Poll Panel ---- */
+    .drinking-poll-panel {
+      background: var(--foam);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: var(--space-md) var(--space-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--space-lg);
+    }
+    .poll-header h3 {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--espresso);
+      margin-bottom: 2px;
+    }
+    .poll-subtitle {
+      font-size: 12.5px;
+      color: var(--text-soft);
+    }
+    .poll-actions {
+      display: flex;
+      gap: 10px;
+      margin: 12px 0 8px;
+    }
+    .btn-poll {
+      flex: 1;
+      padding: 11px;
+      font-size: 14.5px;
+      font-weight: 700;
+      border-radius: 99px;
+      border: 1.5px solid var(--border);
+      background: var(--cream);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, border-color 0.2s;
+    }
+    .btn-poll:active { transform: scale(0.98); }
+    .btn-yes {
+      color: var(--amber-dark);
+    }
+    .btn-yes:hover, .btn-yes.voted {
+      background: var(--amber);
+      color: var(--espresso);
+      border-color: var(--amber-dark);
+    }
+    .btn-no {
+      color: var(--text-soft);
+    }
+    .btn-no:hover, .btn-no.voted {
+      background: var(--copper);
+      color: white;
+      border-color: var(--copper-dark);
+    }
+    .poll-results {
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text-body);
+      border-top: 1.5px dashed var(--border);
+      padding-top: 10px;
+      margin-top: 8px;
+    }
+    .poll-voter-list {
+      font-weight: 700;
+      color: var(--espresso);
+    }
   </style>
 </head>
 <body>
@@ -752,6 +818,21 @@
           Tappa
         </a>
       </nav>
+
+      <!-- SE CONNESSO: PANEL VOTAZIONE STASERA SI BEVE -->
+      <div class="drinking-poll-panel fade-up" id="drinkingPollPanel" style="display: none;">
+        <div class="poll-header">
+          <h3>🍻 Stasera si beve?</h3>
+          <span class="poll-subtitle">Sonda lo stato d'animo del gruppo per stasera</span>
+        </div>
+        <div class="poll-actions">
+          <button class="btn-poll btn-yes" id="pollBtnYes">SÌ! 🍺</button>
+          <button class="btn-poll btn-no" id="pollBtnNo">NO 🛑</button>
+        </div>
+        <div class="poll-results" id="pollResults">
+          <!-- Risultati in tempo reale -->
+        </div>
+      </div>
 
       <div class="bento-grid">
 
@@ -1096,12 +1177,100 @@
       location.reload();
     });
 
+    /* ---- Poll Votazione Stasera si Beve ---- */
+    function renderPoll() {
+      if (!BS.isConnected()) {
+        document.getElementById("drinkingPollPanel").style.display = "none";
+        return;
+      }
+      document.getElementById("drinkingPollPanel").style.display = "block";
+      
+      var state = BS.get();
+      var activeVoterId = BS.getActiveProfileId();
+      var votes = state.drinkingVotes || [];
+      
+      var yesVoters = [];
+      var noVoters = [];
+      
+      votes.forEach(function(v) {
+        var member = state.crew.find(function(p) { return p.id === v.voterId; });
+        if (member) {
+          if (v.vote === "si") yesVoters.push(member.name);
+          else if (v.vote === "no") noVoters.push(member.name);
+        }
+      });
+      
+      var myVote = votes.find(function(v) { return v.voterId === activeVoterId; });
+      var btnYes = document.getElementById("pollBtnYes");
+      var btnNo = document.getElementById("pollBtnNo");
+      
+      btnYes.classList.toggle("voted", !!(myVote && myVote.vote === "si"));
+      btnNo.classList.toggle("voted", !!(myVote && myVote.vote === "no"));
+      
+      var html = "";
+      if (yesVoters.length === 0 && noVoters.length === 0) {
+        html = "🍻 Nessun voto registrato ancora stasera. Fai la prima mossa!";
+      } else {
+        var parts = [];
+        if (yesVoters.length > 0) {
+          parts.push('<span class="poll-voter-list">' + yesVoters.join(", ") + '</span> dicono <b>SÌ! 🍺 (' + yesVoters.length + ')</b>');
+        }
+        if (noVoters.length > 0) {
+          parts.push('<span class="poll-voter-list">' + noVoters.join(", ") + '</span> dicono <b>NO 🛑 (' + noVoters.length + ')</b>');
+        }
+        html = "📊 " + parts.join(" &middot; ");
+      }
+      
+      document.getElementById("pollResults").innerHTML = html;
+    }
+
+    function castDrinkVote(voteValue) {
+      var activeVoterId = BS.getActiveProfileId();
+      if (!activeVoterId) {
+        BS.promptForProfile(function() {
+          var newVoterId = BS.getActiveProfileId();
+          if (newVoterId) executeDrinkVote(newVoterId, voteValue);
+        });
+      } else {
+        executeDrinkVote(activeVoterId, voteValue);
+      }
+    }
+
+    function executeDrinkVote(voterId, voteValue) {
+      var state = BS.get();
+      state.drinkingVotes = state.drinkingVotes || [];
+      var existing = state.drinkingVotes.find(function(v) { return v.voterId === voterId; });
+      if (existing) {
+        if (existing.vote === voteValue) {
+          state.drinkingVotes = state.drinkingVotes.filter(function(v) { return v.voterId !== voterId; });
+        } else {
+          existing.vote = voteValue;
+        }
+      } else {
+        state.drinkingVotes.push({ voterId: voterId, vote: voteValue });
+      }
+      BS.save();
+      renderPoll();
+    }
+
+    document.getElementById("pollBtnYes").addEventListener("click", function() { castDrinkVote("si"); });
+    document.getElementById("pollBtnNo").addEventListener("click", function() { castDrinkVote("no"); });
+
+    // Aggiorna la UI in tempo reale al cambio di stato
+    window.addEventListener("birrozzeStateChange", function () {
+      updateStats();
+      renderCrew();
+      renderHeroPerla();
+      renderPoll();
+    });
+
     /* ---- Init ---- */
     updateStats();
     renderCrew();
     renderHeroPerla();
     paintTimer();
     syncTimer();
+    renderPoll();
 
   })();
   </script>

@@ -337,8 +337,10 @@
     /* ---- Payer Options ---- */
     function updatePayerOptions() {
       var state = BS.get();
+      var activeId = BS.getActiveProfileId();
       var html = state.crew.map(function (p) {
-        return '<option value="' + p.id + '">' + BS.esc(p.name) + '</option>';
+        var selected = p.id === activeId ? "selected" : "";
+        return '<option value="' + p.id + '" ' + selected + '>' + BS.esc(p.name) + '</option>';
       }).join('');
       document.getElementById("expPayer").innerHTML = html;
     }
@@ -467,6 +469,10 @@
     });
 
     /* ---- Init ---- */
+    document.getElementById("expPayer").addEventListener("change", function (e) {
+      BS.setActiveProfileId(e.target.value);
+    });
+
     var state = BS.get();
     if (state.alcoholSplitMode === "consumo") {
       document.getElementById("btnConsumo").classList.add("active");

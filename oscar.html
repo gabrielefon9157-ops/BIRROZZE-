@@ -89,6 +89,7 @@
     }
     .oscar-row:hover { border-color: var(--border-dark); transform: translateX(4px); }
     .oscar-row:active { transform: translateX(4px) scale(.98); }
+    .oscar-row.active { border-color: var(--amber-dark); background: rgba(227, 163, 32, 0.05); }
     .oscar-row-bg {
       position: absolute;
       top: 0; left: 0; bottom: 0;
@@ -276,26 +277,39 @@
     /* ---- Oscar Grid ---- */
     function renderOscars() {
       var state = BS.get();
+      var activeVoterId = BS.getActiveProfileId();
 
       var html = state.oscars.map(function (o) {
-        var tot = 0, leadId = null, leadV = 0;
-        for (var pid in o.votes) {
-          tot += o.votes[pid];
-          if (o.votes[pid] > leadV) { leadV = o.votes[pid]; leadId = pid; }
+        var tally = {};
+        var tot = 0;
+        state.crew.forEach(function (p) { tally[p.id] = 0; });
+        for (var voterId in o.votes) {
+          var candId = o.votes[voterId];
+          if (tally[candId] !== undefined) {
+            tally[candId]++;
+            tot++;
+          }
+        }
+
+        var leadId = null, leadV = 0;
+        for (var candId in tally) {
+          if (tally[candId] > leadV) { leadV = tally[candId]; leadId = candId; }
         }
 
         var leaderName = "—";
         state.crew.forEach(function (p) { if (p.id === leadId) leaderName = p.name; });
 
         var rows = state.crew.map(function (p) {
-          var v   = o.votes[p.id] || 0;
+          var v   = tally[p.id] || 0;
           var pct = tot > 0 ? (v / tot * 100) : 0;
-          return '<div class="oscar-row" role="button" tabindex="0" data-oscar="' + o.id + '" data-cand="' + p.id + '" aria-label="Vota ' + BS.esc(p.name) + '">' +
+          var hasVotedForThis = o.votes[activeVoterId] === p.id;
+          
+          return '<div class="oscar-row' + (hasVotedForThis ? ' active' : '') + '" role="button" tabindex="0" data-oscar="' + o.id + '" data-cand="' + p.id + '" aria-label="Vota ' + BS.esc(p.name) + '">' +
             '<div class="oscar-row-bg" style="width:' + pct + '%"></div>' +
             '<span class="oscar-cand-name">' + BS.esc(p.name) + '</span>' +
             '<span class="oscar-actions">' +
               '<span class="oscar-cand-votes">' + v + ' voti</span>' +
-              (v > 0 ? '<button class="oscar-unvote" data-unvote-oscar="' + o.id + '" data-unvote-cand="' + p.id + '" title="Togli un voto" aria-label="Togli un voto a ' + BS.esc(p.name) + '">−</button>' : '') +
+              (hasVotedForThis ? '<button class="oscar-unvote" data-unvote-oscar="' + o.id + '" title="Togli il tuo voto" aria-label="Togli il tuo voto">−</button>' : '') +
             '</span>' +
           '</div>';
         }).join('');
@@ -313,6 +327,23 @@
       document.getElementById("oscarGrid").innerHTML = html || '<p style="text-align:center;color:var(--text-mute);grid-column:1/-1;padding:40px 0;">Nessuna categoria Oscar ancora. Creane una qui sotto!</p>';
 
       BS.initReveal();
+    }
+
+    /* ---- Helper per votare ---- */
+    function voteOscar(oscarId, candId, voterId) {
+      var state = BS.get();
+      state.oscars.forEach(function (o) {
+        if (o.id === oscarId) {
+          o.votes[voterId] = candId;
+        }
+      });
+      BS.save();
+      renderOscars();
+      renderStats();
+      
+      var name = "";
+      state.crew.forEach(function (p) { if (p.id === candId) name = p.name; });
+      BS.toast("Hai votato per " + name + "!");
     }
 
     /* ---- Events ---- */
@@ -336,18 +367,21 @@
       // Togli un voto (correzione)
       var unvote = e.target.closest(".oscar-unvote");
       if (unvote) {
+        e.stopPropagation();
         var uOscar = unvote.getAttribute("data-unvote-oscar");
-        var uCand  = unvote.getAttribute("data-unvote-cand");
-        var st2 = BS.get();
-        st2.oscars.forEach(function (o) {
-          if (o.id === uOscar && o.votes[uCand]) {
-            o.votes[uCand] -= 1;
-            if (o.votes[uCand] <= 0) delete o.votes[uCand];
-          }
-        });
-        BS.save();
-        renderOscars();
-        renderStats();
+        var activeVoterId = BS.getActiveProfileId();
+        if (activeVoterId) {
+          var st2 = BS.get();
+          st2.oscars.forEach(function (o) {
+            if (o.id === uOscar) {
+              delete o.votes[activeVoterId];
+            }
+          });
+          BS.save();
+          renderOscars();
+          renderStats();
+          BS.toast("Voto rimosso.");
+        }
         return;
       }
 
@@ -356,17 +390,15 @@
       if (!btn) return;
       var oscarId = btn.getAttribute("data-oscar");
       var candId  = btn.getAttribute("data-cand");
-      var state   = BS.get();
-      state.oscars.forEach(function (o) {
-        if (o.id === oscarId) o.votes[candId] = (o.votes[candId] || 0) + 1;
-      });
-      BS.save();
-      renderOscars();
-      renderStats();
-
-      var name = "";
-      state.crew.forEach(function (p) { if (p.id === candId) name = p.name; });
-      BS.toast("Voto per " + name + " registrato!");
+      var activeVoterId = BS.getActiveProfileId();
+      if (!activeVoterId) {
+        BS.promptForProfile(function() {
+          var newVoterId = BS.getActiveProfileId();
+          if (newVoterId) voteOscar(oscarId, candId, newVoterId);
+        });
+      } else {
+        voteOscar(oscarId, candId, activeVoterId);
+      }
     });
 
     // Voto da tastiera sulle righe (accessibilità)

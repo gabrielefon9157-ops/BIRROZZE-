@@ -8,7 +8,6 @@
 
   var STORAGE_KEY = "birozze_state_v6";
 
-  /* ---- Dati di default (primo avvio) ---- */
   var DEFAULT_STATE = {
     crew: [],
     expenses: [],
@@ -21,6 +20,7 @@
       { id: "o4", title: "Re/Regina dell'aperitivo", votes: {} }
     ],
     nextOpts: [],
+    drinkingVotes: [],
     elapsed: 0,
     running: false,
     alcoholSplitMode: "uguale",
@@ -171,6 +171,53 @@
     } catch (e) {}
   }
 
+  var PROFILE_ID_KEY = "birozze_active_profile_id";
+
+  function getActiveProfileId() {
+    try {
+      return localStorage.getItem(PROFILE_ID_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setActiveProfileId(id) {
+    try {
+      if (id) localStorage.setItem(PROFILE_ID_KEY, id);
+      else    localStorage.removeItem(PROFILE_ID_KEY);
+    } catch (e) {}
+  }
+
+  function promptForProfile(callback) {
+    var activeId = getActiveProfileId();
+    if (activeId) {
+      var found = _state.crew.some(function(p) { return p.id === activeId; });
+      if (found) {
+        if (callback) callback();
+        return;
+      }
+    }
+
+    var name = prompt("Inserisci il tuo nome per unirti a questo gruppo condiviso:");
+    if (!name) {
+      if (callback) callback();
+      return;
+    }
+    name = name.trim();
+    if (!name) {
+      if (callback) callback();
+      return;
+    }
+
+    var newId = "user_" + uid();
+    _state.crew.push({ id: newId, name: name, drinks: {}, is_active: true });
+    setActiveProfileId(newId);
+    save();
+    
+    toast("Benvenuto " + name + "! Il tuo profilo è attivo.");
+    if (callback) callback();
+  }
+
   /* ---- State Management (localStorage + Supabase Relational) ---- */
   function load() {
     // 1. Carica prima da localStorage come fallback/copia offline
@@ -251,7 +298,8 @@
         sb.from("oscars").select("*").eq("session_id", sessionId),
         sb.from("oscar_votes").select("*").eq("session_id", sessionId),
         sb.from("proposals").select("*").eq("session_id", sessionId),
-        sb.from("proposal_votes").select("*").eq("session_id", sessionId)
+        sb.from("proposal_votes").select("*").eq("session_id", sessionId),
+        sb.from("drinking_votes").select("*").eq("session_id", sessionId)
       ]);
 
       var sess = results[0].data;
@@ -270,6 +318,7 @@
       var oscarVotesList = results[7].data || [];
       var proposalsList = results[8].data || [];
       var proposalVotesList = results[9].data || [];
+      var drinkingVotesList = results[10].data || [];
 
       var newState = {};
       newState.alcoholSplitMode = sess.alcohol_split_mode;
@@ -304,7 +353,7 @@
       newState.oscars = oscarsList.map(function(o) {
         var votesMap = {};
         oscarVotesList.filter(function(v) { return v.oscar_id === o.id; }).forEach(function(v) {
-          votesMap[v.candidate_id] = (votesMap[v.candidate_id] || 0) + 1;
+          votesMap[v.voter_id] = v.candidate_id;
         });
         return { id: o.id, title: o.title, votes: votesMap };
       });
@@ -313,6 +362,11 @@
       newState.nextOpts = proposalsList.map(function(p) {
         var votersList = proposalVotesList.filter(function(v) { return v.proposal_id === p.id; }).map(function(v) { return v.voter_id; });
         return { id: p.id, label: p.label, votes: votersList.length, voters: votersList };
+      });
+
+      // Drinking Votes
+      newState.drinkingVotes = drinkingVotesList.map(function(v) {
+        return { voterId: v.voter_id, vote: v.vote };
       });
 
       // Confronta lo stato per verificare se ci sono cambiamenti
@@ -401,31 +455,12 @@
       for (var i = 0; i < _state.oscars.length; i++) {
         var o = _state.oscars[i];
         await sb.from("oscars").insert({ id: o.id, session_id: sessionId, title: o.title });
-        // Inserisci voti fittizi per contatore iniziale
-        for (var candId in o.votes) {
-          for (var k = 0; k < o.votes[candId]; k++) {
-            await sb.from("oscar_votes").insert({
-              session_id: sessionId,
-              oscar_id: o.id,
-              voter_id: "voter_" + uid(),
-              candidate_id: candId
-            });
-          }
-        }
       }
 
       // Inserisci Proposals (nextOpts)
       for (var i = 0; i < _state.nextOpts.length; i++) {
         var p = _state.nextOpts[i];
         await sb.from("proposals").insert({ id: p.id, session_id: sessionId, label: p.label });
-        var voters = p.voters || [];
-        for (var k = 0; k < voters.length; k++) {
-          await sb.from("proposal_votes").insert({
-            session_id: sessionId,
-            proposal_id: p.id,
-            voter_id: voters[k]
-          });
-        }
       }
 
       _lastSyncedState = deepClone(_state);
@@ -618,17 +653,26 @@
         }
         var oldVotes = (oo && oo.votes) || {};
         var newVotes = no.votes || {};
-        for (var candId in newVotes) {
-          var diff = (newVotes[candId] || 0) - (oldVotes[candId] || 0);
-          if (diff > 0) {
-            for (var k = 0; k < diff; k++) {
-              await sb.from("oscar_votes").insert({
-                session_id: sessionId,
-                oscar_id: no.id,
-                voter_id: "voter_" + uid(),
-                candidate_id: candId
-              });
-            }
+        
+        // Cancella i voti rimossi
+        for (var voterId in oldVotes) {
+          if (!newVotes[voterId]) {
+            await sb.from("oscar_votes").delete().eq("oscar_id", no.id).eq("voter_id", voterId).eq("session_id", sessionId);
+          }
+        }
+        // Inserisci o aggiorna i voti
+        for (var voterId in newVotes) {
+          if (!oldVotes[voterId]) {
+            await sb.from("oscar_votes").insert({
+              session_id: sessionId,
+              oscar_id: no.id,
+              voter_id: voterId,
+              candidate_id: newVotes[voterId]
+            });
+          } else if (oldVotes[voterId] !== newVotes[voterId]) {
+            await sb.from("oscar_votes").update({
+              candidate_id: newVotes[voterId]
+            }).eq("oscar_id", no.id).eq("voter_id", voterId).eq("session_id", sessionId);
           }
         }
       }
@@ -664,6 +708,32 @@
               voter_id: newVoters[k]
             });
           }
+        }
+      }
+
+      // 8. Drinking Votes (Stasera si beve?)
+      var oldDV = oldState.drinkingVotes || [];
+      var newDV = newState.drinkingVotes || [];
+      // Deletes
+      for (var i = 0; i < oldDV.length; i++) {
+        if (!newDV.find(function(v) { return v.voterId === oldDV[i].voterId; })) {
+          await sb.from("drinking_votes").delete().eq("voter_id", oldDV[i].voterId).eq("session_id", sessionId);
+        }
+      }
+      // Inserts / Updates
+      for (var j = 0; j < newDV.length; j++) {
+        var nv = newDV[j];
+        var ov = oldDV.find(function(v) { return v.voterId === nv.voterId; });
+        if (!ov) {
+          await sb.from("drinking_votes").insert({
+            session_id: sessionId,
+            voter_id: nv.voterId,
+            vote: nv.vote
+          });
+        } else if (ov.vote !== nv.vote) {
+          await sb.from("drinking_votes").update({
+            vote: nv.vote
+          }).eq("voter_id", nv.voterId).eq("session_id", sessionId);
         }
       }
 
@@ -714,7 +784,9 @@
       
       ensureSupabaseSdk(function() {
         if (initSupabase()) {
-          loadFromSupabase(joinCode);
+          loadFromSupabase(joinCode).then(function() {
+            promptForProfile();
+          });
           subscribeRealtime(joinCode);
           toast("Connesso al gruppo " + joinCode + "!");
         }
@@ -820,7 +892,9 @@
       setActiveGroupId(code);
       updatePill();
       closeModal();
-      loadFromSupabase(code);
+      loadFromSupabase(code).then(function() {
+        promptForProfile();
+      });
       subscribeRealtime(code);
       toast("Connesso al gruppo " + code + "!");
     });
@@ -842,6 +916,7 @@
       updatePill();
       closeModal();
       subscribeRealtime(code);
+      promptForProfile();
       
       btn.disabled = false;
       btn.textContent = "Crea Nuovo Gruppo Condiviso";
@@ -886,7 +961,9 @@
     initSupabase();
     var gid = getActiveGroupId();
     if (sb && gid) {
-      loadFromSupabase(gid);
+      loadFromSupabase(gid).then(function() {
+        promptForProfile();
+      });
       subscribeRealtime(gid);
     }
   });
@@ -1102,7 +1179,10 @@
     toast:                toast,
     initReveal:           initReveal,
     markActiveNav:        markActiveNav,
-    compressImageFile:    compressImageFile
+    compressImageFile:    compressImageFile,
+    getActiveProfileId:   getActiveProfileId,
+    setActiveProfileId:   setActiveProfileId,
+    promptForProfile:     promptForProfile
   };
 
 })(window);

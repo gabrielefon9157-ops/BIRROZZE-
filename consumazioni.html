@@ -317,7 +317,10 @@
     BS.initReveal();
 
     var state = BS.get();
-    var activePerson = state.crew.length > 0 ? state.crew[0].id : null;
+    var savedId = BS.getActiveProfileId();
+    var activePerson = (savedId && state.crew.some(function(p) { return p.id === savedId; }))
+      ? savedId 
+      : (state.crew.length > 0 ? state.crew[0].id : null);
     var activeFilter = "Tutti";
     var CATS = ["Tutti", "Whisky", "Vodka", "Gin", "Rum", "Tequila", "Cognac", "Liquori"];
 
@@ -463,6 +466,7 @@
       var pill = e.target.closest("[data-id]");
       if (pill && !e.target.closest("[data-remove]")) {
         activePerson = pill.getAttribute("data-id");
+        BS.setActiveProfileId(activePerson);
         renderPersonSelector();
         renderRecap();
       }
@@ -480,6 +484,7 @@
           state.crew.push({ id: newId, name: val, drinks: {}, is_active: true });
           BS.save();
           activePerson = newId;
+          BS.setActiveProfileId(activePerson);
           input.value = "";
           renderPersonSelector();
           renderRecap();
