@@ -10,7 +10,9 @@
     /* ======================================================
        INDEX.HTML — Home "Birra come DNA"
        Hero: bottiglia SVG gigante diagonale + titolo centrato
-       Dashboard: collage di card pastello stile golf-app
+       Sotto: collage bento — le feature SONO le card della
+       dashboard, con illustrazioni nei toni champagne/ocra
+       dell'hero (riferimento: dashboard golf pastello)
        ====================================================== */
 
     /* ------------------------------------------------------
@@ -175,206 +177,233 @@
     }
 
     /* ------------------------------------------------------
-       DASHBOARD COLLAGE — banda pastello con card bianche
+       BENTO COLLAGE — le feature come card dashboard,
+       stesso mondo visivo dell'hero (champagne, ocra, carta)
        ------------------------------------------------------ */
-    .dash-section {
-      padding: var(--space-xxl) 0;
-      background: linear-gradient(178deg, var(--sky) 0%, var(--mint) 52%, var(--cream) 100%);
+    .bento-section {
+      padding: var(--space-xl) 0 var(--space-xxl);
+      background:
+        radial-gradient(ellipse 75% 42% at 50% 0%, rgba(227,163,32,.06) 0%, transparent 70%),
+        var(--cream);
     }
-    .dash-head {
-      text-align: center;
-      margin-bottom: var(--space-xl);
+    /* Testata alla iOS: titolo grande a sinistra, azione a destra */
+    .bento-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: var(--space-md);
+      text-align: left;
+      margin-bottom: var(--space-md);
     }
-    .dash-head h2 {
+    .bento-head h2 {
       font-family: var(--font-display);
-      font-size: clamp(28px, 5vw, 44px);
+      font-size: clamp(28px, 4.6vw, 44px);
       font-weight: 800;
       color: var(--espresso);
-      letter-spacing: -0.025em;
-      margin: var(--space-xs) 0 var(--space-sm);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin: 6px 0 6px;
     }
-    .dash-head p { color: var(--text-soft); font-size: 16px; max-width: 440px; margin: 0 auto; }
-
-    .dash-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: var(--space-md);
+    .bento-head h2 .hand {
+      font-family: var(--font-hand);
+      font-style: italic;
+      font-weight: 600;
+      color: var(--amber-dark);
+      font-size: 1.15em;
+    }
+    .bento-head p { color: var(--text-soft); font-size: 15px; max-width: 440px; }
+    .bento-see {
+      flex-shrink: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--amber-dark);
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      transition: background .18s;
+    }
+    .bento-see:hover { background: var(--amber-pale); }
+    @media (max-width: 560px) {
+      .bento-head { flex-direction: column; align-items: flex-start; }
     }
 
-    .dash-card {
+    /* Fila di pillole rapide scorrevole (chip stile iOS / rif. SINPORT) */
+    .quick-row {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 2px 2px 6px;
+      margin-bottom: var(--space-lg);
+      scrollbar-width: none;
+    }
+    .quick-row::-webkit-scrollbar { display: none; }
+    .quick-pill {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
       background: var(--foam);
-      border: 1px solid rgba(229,220,195,.7);
-      border-radius: var(--r-lg);
-      padding: var(--space-lg);
-      box-shadow: 0 14px 34px rgba(42,35,24,.07), 0 2px 6px rgba(42,35,24,.04);
-      transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s;
+      color: var(--espresso);
+      border: 1px solid var(--border);
+      transition: transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s;
     }
-    .dash-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 44px rgba(42,35,24,.10), 0 3px 8px rgba(42,35,24,.05);
+    .quick-pill:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(42,35,24,.1); }
+    .quick-pill svg { width: 16px; height: 16px; color: var(--amber-dark); }
+    .quick-pill:hover { border-color: var(--amber); }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--space-lg);
     }
 
-    .dash-label {
+    /* ---- Tile base: tutte foam, omogenee, con tanta aria ---- */
+    .bento-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      background: var(--foam);
+      border: none;
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 10px 26px rgba(42,35,24,.07);
+      text-decoration: none;
+      transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s;
+      overflow: hidden;
+    }
+    a.bento-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px rgba(42,35,24,.13);
+    }
+    a.bento-card:active { transform: scale(.985); }
+
+    .bento-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-sm);
+    }
+    .bento-label {
       font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.15em;
       color: var(--text-mute);
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
-    .dash-num {
+    .bento-title {
       font-family: var(--font-display);
-      font-size: clamp(34px, 4.5vw, 48px);
+      font-size: clamp(19px, 2.2vw, 23px);
       font-weight: 800;
       color: var(--espresso);
-      line-height: 1;
       letter-spacing: -0.02em;
+      line-height: 1.12;
     }
-    .dash-num small,
-    .dash-num .euro {
-      font-size: .5em;
-      font-weight: 600;
-      color: var(--text-soft);
-    }
-    .dash-hint {
-      margin-top: 10px;
-      font-size: 12.5px;
-      color: var(--text-soft);
-    }
-
-    /* Posizionamento asimmetrico */
-    .tile-drinks { grid-column: span 2; }
-    .tile-bill   { grid-column: span 2; }
-    .tile-debts  { grid-column: span 2; }
-    .timer-card  { grid-column: span 3; }
-    .perla-card  { grid-column: span 3; }
-    .crew-block  { grid-column: span 4; }
-    .tile-photos { grid-column: span 1; }
-    .tile-perle  { grid-column: span 1; }
-
-    @media (max-width: 860px) {
-      .dash-grid { grid-template-columns: repeat(2, 1fr); }
-      .tile-drinks, .tile-bill, .tile-debts,
-      .tile-photos, .tile-perle { grid-column: span 1; }
-      .timer-card, .perla-card, .crew-block { grid-column: span 2; }
-    }
-    @media (max-width: 460px) {
-      .dash-grid { grid-template-columns: 1fr; }
-      .tile-drinks, .tile-bill, .tile-debts, .tile-photos, .tile-perle,
-      .timer-card, .perla-card, .crew-block { grid-column: span 1; }
-    }
-
-    /* ---- Timer card: l'accento arancio-rosso ---- */
-    .timer-card {
-      background: var(--copper);
-      border-color: rgba(0,0,0,.06);
-      color: #FFF7EF;
+    .bento-go {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-dark);
       display: flex;
-      flex-direction: column;
-      gap: var(--space-md);
+      align-items: center;
+      justify-content: center;
+      color: var(--espresso);
+      font-size: 16px;
+      transition: background .2s, border-color .2s, transform .25s cubic-bezier(.16,1,.3,1);
     }
-    .timer-card:hover { box-shadow: 0 22px 48px rgba(232,85,47,.34); }
-    .timer-card .dash-label { color: rgba(255,247,239,.75); }
-    .timer-status {
+    a.bento-card:hover .bento-go {
+      background: var(--amber);
+      border-color: var(--amber);
+      transform: rotate(-38deg);
+    }
+
+    /* ---- Icona minimal e felice, in chip pastello tenue ---- */
+    .bento-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--espresso-soft);
+      margin-bottom: 12px;
+    }
+    .bento-icon svg { width: 28px; height: 28px; }
+    .ic-butter { background: var(--butter); }
+    .ic-mint   { background: var(--mint); }
+    .ic-sky    { background: var(--sky); }
+    .ic-blush  { background: var(--blush); }
+
+    /* Riga scritta a mano, per un sorriso in più */
+    .bento-hand {
       font-family: var(--font-hand);
       font-size: 22px;
-      color: rgba(255,247,239,.9);
-      line-height: 1;
+      color: var(--amber-dark);
+      line-height: 1.1;
+      margin-top: 2px;
     }
-    .timer-units {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .timer-unit { display: flex; flex-direction: column; align-items: center; }
-    .timer-digit {
-      font-family: var(--font-mono);
-      font-size: clamp(34px, 5vw, 46px);
-      font-weight: 600;
-      color: #FFF7EF;
-      line-height: 1;
-      min-width: 66px;
-      text-align: center;
-      background: rgba(255,255,255,.14);
-      border: 1px solid rgba(255,255,255,.22);
-      border-radius: var(--r-sm);
-      padding: 10px 8px;
-    }
-    .timer-unit-label {
-      font-size: 10px;
+
+    /* ---- Numeri e statistiche dentro le card ---- */
+    .bstat { display: flex; flex-direction: column; gap: 3px; }
+    .bstat-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: rgba(255,247,239,.65);
-      margin-top: 7px;
+      letter-spacing: 0.13em;
+      color: var(--text-mute);
     }
-    .timer-sep {
-      font-family: var(--font-mono);
-      font-size: 30px;
-      color: rgba(255,247,239,.6);
-      align-self: center;
-      padding-bottom: 18px;
+    .bstat-label svg { width: 15px; height: 15px; color: var(--amber-dark); }
+    .bstat-num {
+      font-family: var(--font-display);
+      font-size: clamp(30px, 3.6vw, 44px);
+      font-weight: 800;
+      color: var(--espresso);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
     }
-    .timer-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .timer-card .btn {
-      border-radius: 999px;
-      font-weight: 700;
-    }
-    .timer-card .btn-primary {
-      background: #FFF7EF;
-      color: var(--copper);
-      border-color: transparent;
-      box-shadow: 0 4px 14px rgba(0,0,0,.14);
-    }
-    .timer-card .btn-primary:hover { background: var(--cream); color: #C4431F; }
-    .timer-card .btn-ghost {
-      background: transparent;
-      color: rgba(255,247,239,.85);
-      border: 1.5px solid rgba(255,247,239,.4);
-    }
-    .timer-card .btn-ghost:hover { border-color: #FFF7EF; color: #FFF7EF; background: rgba(255,255,255,.1); }
+    .bstat-num .euro { font-size: .52em; font-weight: 600; color: var(--text-soft); margin-right: 2px; }
+    .bstat-hint { font-size: 12px; color: var(--text-soft); }
 
-    /* ---- Perla card ---- */
-    .perla-card {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: var(--space-sm);
-      background: var(--foam);
-    }
-    .perla-quote {
-      font-family: var(--font-hand);
-      font-size: clamp(24px, 3.2vw, 32px);
-      color: var(--espresso-soft);
-      line-height: 1.25;
-    }
-    .perla-author {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--amber-dark);
-    }
-
-    /* ---- Crew card ---- */
-    .crew-block { display: flex; flex-direction: column; gap: var(--space-md); }
-    .crew-grid {
+    /* ------------------------------------------------------
+       CARD 1 — CONSUMAZIONI (la card grande, tipo "Main golf course")
+       ------------------------------------------------------ */
+    .card-consumazioni { grid-column: span 12; }
+    .consum-stats-row {
       display: flex;
       flex-wrap: wrap;
+      gap: var(--space-md) var(--space-xxl);
+    }
+    .consum-foot {
+      border-top: 1.5px dashed var(--border);
+      padding-top: var(--space-md);
+      display: flex;
+      flex-direction: column;
       gap: 10px;
     }
+
+    /* Crew chips (popolate da JS dentro la card Consumazioni) */
+    .crew-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .crew-card {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 9px;
       background: var(--cream);
       border: 1px solid var(--border);
       border-radius: 999px;
-      padding: 8px 18px 8px 8px;
-      transition: transform .2s, box-shadow .2s;
+      padding: 6px 16px 6px 6px;
     }
-    .crew-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(42,35,24,.08); }
     .crew-avatar {
-      width: 36px; height: 36px;
+      width: 32px; height: 32px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--amber-light), var(--amber-dark));
       display: flex;
@@ -382,24 +411,128 @@
       justify-content: center;
       font-family: var(--font-display);
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--espresso);
       flex-shrink: 0;
     }
     .crew-info { display: flex; flex-direction: column; }
-    .crew-name { font-weight: 700; font-size: 13.5px; color: var(--espresso); line-height: 1.2; }
-    .crew-drinks { font-size: 11px; color: var(--text-soft); font-family: var(--font-mono); }
-    .crew-empty { font-size: 13px; color: var(--text-mute); }
+    .crew-name { font-weight: 700; font-size: 13px; color: var(--espresso); line-height: 1.2; }
+    .crew-drinks { font-size: 10.5px; color: var(--text-soft); font-family: var(--font-mono); }
 
     /* ------------------------------------------------------
-       TICKER — inchiostro su burro, tondo
+       CARD 2 — CLASSIFICA (riempimento pieno, tipo card "Niki Rublios")
        ------------------------------------------------------ */
-    .ticker-section { padding: 0 var(--space-md); }
+    .card-classifica { grid-column: span 6; }
+
+    /* ------------------------------------------------------
+       CARD 3 — TIMER (bianca, con l'unico accento arancio)
+       ------------------------------------------------------ */
+    .card-timer { grid-column: span 6; }
+    .timer-status {
+      font-family: var(--font-hand);
+      font-size: 23px;
+      color: var(--amber-dark);
+      line-height: 1;
+    }
+    .timer-units {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: auto 0;
+    }
+    .timer-unit { display: flex; flex-direction: column; align-items: center; }
+    .timer-digit {
+      font-family: var(--font-mono);
+      font-size: clamp(30px, 4vw, 40px);
+      font-weight: 600;
+      color: var(--espresso);
+      line-height: 1;
+      min-width: 60px;
+      text-align: center;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 6px;
+    }
+    .timer-unit-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-mute);
+      margin-top: 7px;
+    }
+    .timer-sep {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--amber);
+      align-self: center;
+      padding-bottom: 16px;
+    }
+    .timer-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .card-timer .btn { border-radius: 999px; font-weight: 700; }
+    .card-timer .btn-primary {
+      background: var(--copper);
+      color: #FFF7EF;
+      box-shadow: 0 6px 18px rgba(232,85,47,.28);
+    }
+    .card-timer .btn-primary:hover { background: var(--copper-light); color: #FFF7EF; }
+
+    /* ------------------------------------------------------
+       CARD 4 — GALLERIA (piccola, numero + polaroid)
+       ------------------------------------------------------ */
+    .card-galleria { grid-column: span 6; }
+
+    /* ------------------------------------------------------
+       CARD 5 — PERLE (citazione a mano + contatore)
+       ------------------------------------------------------ */
+    .card-perle { grid-column: span 6; justify-content: space-between; }
+    .perla-quote {
+      font-family: var(--font-hand);
+      font-size: clamp(24px, 3vw, 31px);
+      color: var(--espresso-soft);
+      line-height: 1.22;
+      margin: auto 0;
+    }
+    .perla-author {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--amber-dark);
+    }
+    .perla-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-sm);
+      border-top: 1.5px dashed var(--border);
+      padding-top: var(--space-md);
+    }
+
+    /* ------------------------------------------------------
+       CARD 6/7/8 — SPESE, OSCAR, PROSSIMA
+       ------------------------------------------------------ */
+    .card-spese { grid-column: span 6; }
+    .card-spese .bstat { margin-bottom: 4px; }
+
+    .card-oscar { grid-column: span 6; }
+
+    .card-prossima { grid-column: span 12; }
+
+    /* ---- Responsive del bento ---- */
+    @media (max-width: 700px) {
+      .bento-grid > * { grid-column: span 12 !important; }
+    }
+
+    /* ------------------------------------------------------
+       TICKER — pillola ocra, in linea con l'hero
+       ------------------------------------------------------ */
+    .ticker-section { padding: 0 var(--space-md) var(--space-xxl); background: var(--cream); }
     .ticker-wrap {
       max-width: 1080px;
       margin: 0 auto;
-      background: var(--butter);
-      border: 1px solid var(--border);
+      background: var(--amber-pale);
+      border: 1px solid rgba(227,163,32,.35);
       border-radius: 999px;
       padding: 12px 0;
       overflow: hidden;
@@ -414,7 +547,7 @@
       padding: 0 34px;
       font-size: 12.5px;
       font-weight: 700;
-      color: var(--espresso);
+      color: var(--amber-dark);
       text-transform: uppercase;
       letter-spacing: 0.1em;
     }
@@ -422,93 +555,6 @@
       from { transform: translateX(0); }
       to   { transform: translateX(-50%); }
     }
-
-    /* ------------------------------------------------------
-       FEATURES — card pastello con icone tratteggiate
-       ------------------------------------------------------ */
-    .features-section { padding: var(--space-xxl) 0; background: var(--cream); }
-    .features-title-block { text-align: center; margin-bottom: var(--space-xl); }
-    .features-title-block h2 {
-      font-family: var(--font-display);
-      font-size: clamp(28px, 5vw, 44px);
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      color: var(--espresso);
-      margin: var(--space-xs) 0 var(--space-sm);
-    }
-    .features-title-block h2 .hand {
-      font-family: var(--font-hand);
-      font-style: italic;
-      font-weight: 600;
-      color: var(--amber-dark);
-      font-size: 1.15em;
-    }
-    .features-title-block p { color: var(--text-soft); font-size: 16px; max-width: 460px; margin: 0 auto; }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: var(--space-md);
-    }
-
-    .feature-card {
-      display: block;
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      padding: var(--space-lg);
-      text-decoration: none;
-      position: relative;
-      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease;
-      box-shadow: 0 2px 8px rgba(42,35,24,.04);
-    }
-    .feature-card:hover {
-      transform: translateY(-6px) rotate(-0.7deg);
-      box-shadow: 0 18px 38px rgba(42,35,24,.11);
-    }
-    .feature-card:nth-child(even):hover { transform: translateY(-6px) rotate(0.7deg); }
-    .feature-card.tint-butter { background: var(--butter); }
-    .feature-card.tint-mint   { background: var(--mint); }
-    .feature-card.tint-sky    { background: var(--sky); }
-    .feature-card.tint-blush  { background: var(--blush); }
-
-    .feature-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--r);
-      background: var(--foam);
-      border: 1px solid rgba(42,35,24,.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--espresso-soft);
-      margin-bottom: var(--space-md);
-    }
-    .feature-icon svg { width: 28px; height: 28px; }
-    .feature-name {
-      font-family: var(--font-display);
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--espresso);
-      margin-bottom: 6px;
-      letter-spacing: -0.01em;
-    }
-    .feature-desc {
-      color: var(--text-body);
-      font-size: 13.5px;
-      line-height: 1.55;
-      margin-bottom: var(--space-md);
-      opacity: .85;
-    }
-    .feature-arrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12.5px;
-      font-weight: 700;
-      color: var(--espresso);
-      transition: gap .2s;
-    }
-    .feature-card:hover .feature-arrow { gap: 10px; }
 
     /* ------------------------------------------------------
        FOOTER extra
@@ -530,7 +576,7 @@
       .hero-bubble { animation: none; }
       .ticker-inner { animation: none; }
       .hero-kicker, .hero-title, .hero-sub, .hero-cta-row { animation: none; }
-      .dash-card, .feature-card, .crew-card, .cta-main, .cta-secondary { transition: none; }
+      .bento-card, .bento-go, .crew-card, .cta-main, .cta-secondary, .quick-pill, .bento-see { transition: none; }
     }
 
     /* Responsive: su mobile accorcia la topnav */
@@ -650,40 +696,125 @@
     </div>
   </section>
 
-  <!-- DASHBOARD COLLAGE -->
-  <section class="dash-section" aria-label="Cruscotto della serata">
+  <!-- BENTO COLLAGE: feature + dati live in un unico quadro -->
+  <section class="bento-section" aria-labelledby="bento-heading">
     <div class="page-wrap">
-      <div class="dash-head fade-up">
-        <span class="section-label">La Serata, Live</span>
-        <h2>Come sta andando?</h2>
-        <p>Numeri in tempo reale dal taccuino condiviso. Si aggiornano da soli.</p>
+      <div class="bento-head fade-up">
+        <div>
+          <span class="hero-kicker" style="margin-bottom:2px;">Il Taccuino</span>
+          <h2 id="bento-heading">Tutta la serata, <span class="hand">in un colpo d&rsquo;occhio.</span></h2>
+          <p>Ogni tile è una pagina del taccuino: numeri live dentro, un tocco per aprirla.</p>
+        </div>
+        <a class="bento-see" href="consumazioni.html">Vedi tutto →</a>
       </div>
 
-      <div class="dash-grid">
-        <!-- Stat tiles -->
-        <div class="dash-card tile-drinks fade-up" role="region" aria-label="Consumazioni totali">
-          <div class="dash-label">Consumazioni</div>
-          <div class="dash-num" id="statDrinks">0</div>
-          <div class="dash-hint">bevute registrate finora</div>
-        </div>
+      <!-- Scorciatoie rapide, scorrevoli in orizzontale -->
+      <nav class="quick-row fade-up" aria-label="Scorciatoie alle pagine">
+        <a class="quick-pill" href="consumazioni.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 5h9v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z"/><path d="M16 8h2.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H16"/></svg>
+          Bevute
+        </a>
+        <a class="quick-pill" href="classifica.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9l-.4 6c-.2 2.5-2 4.2-4.1 4.2S7.9 12.5 7.7 10Z"/><path d="M12 14.5v3M9.5 20.5h5"/></svg>
+          Classifica
+        </a>
+        <a class="quick-pill" href="spese.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.3a3.4 3.4 0 0 0-5 2.7 3.4 3.4 0 0 0 5 2.7M8 11h4M8 13h4"/></svg>
+          Spese
+        </a>
+        <a class="quick-pill" href="galleria.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.2c0-.9.7-1.7 1.6-1.7h2.2l1.3-2h5.8l1.3 2h2.2c.9 0 1.6.8 1.6 1.7v8.6c0 .9-.7 1.6-1.6 1.6H5.6c-.9 0-1.6-.7-1.6-1.6Z"/><circle cx="12" cy="12.3" r="3.2"/></svg>
+          Galleria
+        </a>
+        <a class="quick-pill" href="perle.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.3C4 5 5 4 6.3 4h11.4C19 4 20 5 20 6.3v7.2c0 1.3-1 2.3-2.3 2.3H10l-4.2 3.7.3-3.7h-.4A1.7 1.7 0 0 1 4 14Z"/></svg>
+          Perle
+        </a>
+        <a class="quick-pill" href="oscar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5h16v8c0 .9-.7 1.6-1.6 1.6H5.6c-.9 0-1.6-.7-1.6-1.6Z"/><path d="M4.3 10.4 3.6 7.2 19 3.6l.8 3.3ZM7.5 9.6l2.3-3.2M11.7 8.6 14 5.4M15.9 7.7l2.3-3.2"/></svg>
+          Oscar
+        </a>
+        <a class="quick-pill" href="prossima.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21.3s-6.4-5.6-6.4-10.4a6.4 6.4 0 1 1 12.8 0c0 4.8-6.4 10.4-6.4 10.4Z"/><circle cx="12" cy="10.7" r="2.4"/></svg>
+          Tappa
+        </a>
+      </nav>
 
-        <div class="dash-card tile-bill fade-up" role="region" aria-label="Conto della serata">
-          <div class="dash-label">Conto Serata</div>
-          <div class="dash-num"><span class="euro">€</span><span id="statBill">0,00</span></div>
-          <div class="dash-hint">totale stimato del gruppo</div>
-        </div>
+      <div class="bento-grid">
 
-        <div class="dash-card tile-debts fade-up" role="region" aria-label="Debiti aperti">
-          <div class="dash-label">Debiti Aperti</div>
-          <div class="dash-num"><span class="euro">€</span><span id="statDebts">0,00</span></div>
-          <div class="dash-hint">da sistemare tra amici</div>
-        </div>
+        <!-- CONSUMAZIONI — card grande con boccale illustrato e crew -->
+        <a href="consumazioni.html" class="bento-card card-consumazioni fade-up" aria-label="Consumazioni — apri la pagina">
+          <div class="bento-top">
+            <div>
+              <div class="bento-icon ic-butter" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.2 2.5h3.4M10.5 2.7l.1 4.2c0 1.6-2.4 2.5-2.5 4.6L8 20.4c0 .8.6 1.3 1.4 1.3h5c.8 0 1.5-.5 1.4-1.3l-.1-8.9c-.1-2.1-2.4-3-2.4-4.6l.1-4.2"/>
+                  <circle cx="11" cy="16.8" r="0.45"/>
+                  <circle cx="13.2" cy="14.4" r="0.45"/>
+                  <path d="M19.6 4.2l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5Z"/>
+                </svg>
+              </div>
+              <div class="bento-label">Consumazioni</div>
+              <div class="bento-title">Il conto delle birrozze</div>
+            </div>
+            <span class="bento-go" aria-hidden="true">→</span>
+          </div>
 
-        <!-- Timer: la card accento copper -->
-        <div class="dash-card timer-card fade-up" role="region" aria-label="Timer della serata">
-          <div>
-            <div class="dash-label">Timer Serata</div>
-            <div class="timer-status" id="timerStatus">in attesa di avvio</div>
+          <div class="consum-stats-row">
+              <div class="bstat">
+                <span class="bstat-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 5h9v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z"/><path d="M16 8h2.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H16"/><path d="M7 5c1.5-2 7.5-2 9 0"/></svg>
+                  Bevute totali
+                </span>
+                <span class="bstat-num" id="statDrinks">0</span>
+                <span class="bstat-hint">registrate finora dal gruppo</span>
+              </div>
+              <div class="bstat">
+                <span class="bstat-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.3a3.4 3.4 0 0 0-5 2.7 3.4 3.4 0 0 0 5 2.7M8 11h4M8 13h4"/></svg>
+                  Conto serata
+                </span>
+                <span class="bstat-num"><span class="euro">€</span><span id="statBill">0,00</span></span>
+                <span class="bstat-hint">totale stimato del gruppo</span>
+              </div>
+          </div>
+
+          <div class="consum-foot">
+            <div class="bstat-label">Chi c&rsquo;è stasera</div>
+            <div class="crew-grid" id="crewGrid">
+              <!-- Popolato da JS -->
+            </div>
+          </div>
+        </a>
+
+        <!-- CLASSIFICA — card a riempimento pieno, oro champagne -->
+        <a href="classifica.html" class="bento-card card-classifica fade-up" aria-label="Classifica Spugne — apri la pagina">
+          <div class="bento-top">
+            <div>
+              <div class="bento-icon ic-mint" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7.5 4.2h9l-.4 6.2c-.2 2.5-2 4.2-4.1 4.2s-3.9-1.7-4.1-4.2Z"/>
+                  <path d="M7.4 6H5.2c-.1 2.6 1 4.3 2.6 4.6M16.6 6h2.2c.1 2.6-1 4.3-2.6 4.6"/>
+                  <path d="M12 14.8l.1 2.6M9.4 20.7c.9-.6 4.3-.7 5.2 0"/>
+                  <path d="M20.6 15.2l.4 1 1 .4-1 .4-.4 1-.4-1-1-.4 1-.4Z"/>
+                </svg>
+              </div>
+              <div class="bento-label">Classifica</div>
+              <div class="bento-title">Classifica Spugne</div>
+              <div class="bento-hand">chi regge di più stasera?</div>
+            </div>
+            <span class="bento-go" aria-hidden="true">→</span>
+          </div>
+          <span class="bstat-hint">Barre animate e spesa stimata a persona, aggiornate in tempo reale.</span>
+        </a>
+
+        <!-- TIMER — la card con l'accento arancio -->
+        <div class="bento-card card-timer fade-up" role="region" aria-label="Timer della serata">
+          <div class="bento-top">
+            <div>
+              <div class="bento-label">Timer Serata</div>
+              <div class="timer-status" id="timerStatus">in attesa di avvio</div>
+            </div>
           </div>
           <div class="timer-units">
             <div class="timer-unit">
@@ -707,37 +838,114 @@
           </div>
         </div>
 
-        <!-- Perla in evidenza -->
-        <div class="dash-card perla-card fade-up" role="region" aria-label="Perla in evidenza">
-          <div class="dash-label">Perla della Serata</div>
+        <!-- GALLERIA — numero + polaroid illustrate -->
+        <a href="galleria.html" class="bento-card card-galleria fade-up" aria-label="Galleria Polaroid — apri la pagina">
+          <div class="bento-top">
+            <div>
+              <div class="bento-icon ic-sky" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3.6 8.2c0-.9.7-1.7 1.6-1.7h2.2l1.3-2h6.6l1.3 2h2.2c.9 0 1.6.8 1.6 1.7v9c0 .9-.7 1.6-1.6 1.6H5.2c-.9 0-1.6-.7-1.6-1.6Z"/>
+                  <circle cx="12" cy="12.6" r="3.4"/>
+                  <path d="M17.8 9l.3.8.8.3-.8.3-.3.8-.3-.8-.8-.3.8-.3Z"/>
+                </svg>
+              </div>
+              <div class="bento-label">Galleria</div>
+              <div class="bento-title">Polaroid</div>
+            </div>
+            <span class="bento-go" aria-hidden="true">→</span>
+          </div>
+          <div class="bstat">
+            <span class="bstat-num" id="statPhotos">0</span>
+            <span class="bstat-hint">ricordi appesi alla parete</span>
+          </div>
+        </a>
+
+        <!-- PERLE — la citazione scritta a mano -->
+        <a href="perle.html" class="bento-card card-perle fade-up" aria-label="Muro delle Perle — apri la pagina">
+          <div class="bento-top">
+            <div>
+              <div class="bento-icon ic-butter" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 6.3C4 5 5 4 6.3 4h11.4C19 4 20 5 20 6.3v7.2c0 1.3-1 2.3-2.3 2.3H10l-4.2 3.7.3-3.7h-.4A1.7 1.7 0 0 1 4 14Z"/>
+                  <circle cx="9.3" cy="9.2" r="0.45"/>
+                  <circle cx="14.7" cy="9.2" r="0.45"/>
+                  <path d="M9.5 11.6q2.5 1.9 5 0"/>
+                </svg>
+              </div>
+              <div class="bento-label">Perla della Serata</div>
+            </div>
+            <span class="bento-go" aria-hidden="true">→</span>
+          </div>
           <div class="perla-quote" id="heroPerla">
             "Una serata da ricordare comincia sempre con un brindisi."
           </div>
-          <div class="perla-author" id="heroPerlAuthor">— Birozze</div>
-        </div>
-
-        <!-- Crew -->
-        <div class="dash-card crew-block fade-up" role="region" aria-labelledby="crew-heading">
-          <div>
-            <div class="dash-label" id="crew-heading">Chi c'è stasera</div>
-            <div class="dash-hint" style="margin-top:0;">Gestisci il gruppo dalla pagina Consumazioni.</div>
+          <div class="perla-foot">
+            <span class="perla-author" id="heroPerlAuthor">— Birozze</span>
+            <span class="chip"><b id="statPerle">0</b>&nbsp;perle sul muro</span>
           </div>
-          <div class="crew-grid" id="crewGrid">
-            <!-- Popolato da JS -->
+        </a>
+
+        <!-- SPESE — debiti aperti + monete -->
+        <a href="spese.html" class="bento-card card-spese fade-up" aria-label="Spese e Debiti — apri la pagina">
+          <div class="bento-top">
+            <div>
+              <div class="bento-icon ic-mint" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9.2" cy="9.4" r="5.6"/>
+                  <path d="M15.6 8.1a5.6 5.6 0 1 1-6.9 8.4"/>
+                  <path d="M10.8 8c-2-1.4-4.4.3-3.7 2.1.6 1.7 3.4.9 3.5 2.7.1 1.7-2.6 2.2-3.9.9M9.1 6.9v.9M9 13.9v.9"/>
+                  <path d="M19.8 4.4l.4 1 1 .4-1 .4-.4 1-.4-1-1-.4 1-.4Z"/>
+                </svg>
+              </div>
+              <div class="bento-label">Spese &amp; Debiti</div>
+              <div class="bento-title">Chi deve cosa a chi</div>
+            </div>
+            <span class="bento-go" aria-hidden="true">→</span>
           </div>
-        </div>
+          <div class="bstat">
+            <span class="bstat-num"><span class="euro">€</span><span id="statDebts">0,00</span></span>
+            <span class="bstat-hint">debiti aperti da sistemare</span>
+          </div>
+        </a>
 
-        <div class="dash-card tile-photos fade-up" role="region" aria-label="Ricordi fotografici">
-          <div class="dash-label">Foto</div>
-          <div class="dash-num" id="statPhotos">0</div>
-          <div class="dash-hint">ricordi appesi</div>
-        </div>
+        <!-- OSCAR — statuetta -->
+        <a href="oscar.html" class="bento-card card-oscar fade-up" aria-label="Oscar della Vacanza — apri la pagina">
+          <div class="bento-top">
+            <div>
+              <div class="bento-icon ic-blush" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3.8 10.5h16.4v8.3c0 .9-.7 1.6-1.6 1.6H5.4c-.9 0-1.6-.7-1.6-1.6Z"/>
+                  <path d="M4.2 10.4 3.5 7.2 19 3.6l.9 3.3ZM7.4 9.6l2.3-3.2M11.6 8.6l2.3-3.2M15.8 7.7l2.3-3.2"/>
+                  <path d="M11.3 13.6l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6Z"/>
+                </svg>
+              </div>
+              <div class="bento-label">Oscar della Vacanza</div>
+              <div class="bento-title">Premi assurdi, voti veri</div>
+            </div>
+            <span class="bento-go" aria-hidden="true">→</span>
+          </div>
+          <span class="bstat-hint">Vota i compagni, zero giurie serie.</span>
+        </a>
 
-        <div class="dash-card tile-perle fade-up" role="region" aria-label="Perle scritte">
-          <div class="dash-label">Perle</div>
-          <div class="dash-num" id="statPerle">0</div>
-          <div class="dash-hint">citazioni sul muro</div>
-        </div>
+        <!-- PROSSIMA TAPPA — mappina col percorso -->
+        <a href="prossima.html" class="bento-card card-prossima fade-up" aria-label="Prossima Tappa — apri la pagina">
+          <div class="bento-top">
+            <div>
+              <div class="bento-icon ic-sky" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 21.3s-6.4-5.6-6.4-10.4a6.4 6.4 0 1 1 12.8 0c0 4.8-6.4 10.4-6.4 10.4Z"/>
+                  <circle cx="12" cy="10.7" r="2.4"/>
+                  <path d="M2.8 16.5q1.6-1.2 3.2 0" stroke-dasharray="1.5 2.5"/>
+                </svg>
+              </div>
+              <div class="bento-label">Prossima Tappa</div>
+              <div class="bento-title">Dove si va domani?</div>
+            </div>
+            <span class="bento-go" aria-hidden="true">→</span>
+          </div>
+          <span class="bstat-hint">Proponi una meta e votatela insieme. In caso di parità decide Birozze, a caso.</span>
+        </a>
+
       </div>
     </div>
   </section>
@@ -760,118 +968,10 @@
     </div>
   </div>
 
-  <!-- FEATURES -->
-  <section class="features-section" aria-labelledby="features-heading">
-    <div class="page-wrap">
-      <div class="features-title-block fade-up">
-        <span class="section-label">Tutte le Funzioni</span>
-        <h2 id="features-heading">Ogni ricordo, <span class="hand">al suo posto.</span></h2>
-        <p>Sette pagine, una per ogni rito della vacanza. Rapide da usare anche con lo smartphone in una mano e la birra nell'altra.</p>
-      </div>
-
-      <div class="features-grid">
-        <a href="consumazioni.html" class="feature-card tint-butter fade-up">
-          <div class="feature-icon" aria-hidden="true">
-            <!-- bottiglia -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.2 2.5h3.4M10.5 2.7l.1 4.2c0 1.6-2.4 2.5-2.5 4.6L8 20.4c0 .8.6 1.3 1.4 1.3h5c.8 0 1.5-.5 1.4-1.3l-.1-8.9c-.1-2.1-2.4-3-2.4-4.6l.1-4.2"/>
-              <path d="M9 15.5c1 .6 1.6-.4 2.6 0"/>
-              <circle cx="13.6" cy="17.8" r="0.4"/>
-            </svg>
-          </div>
-          <div class="feature-name">Consumazioni</div>
-          <div class="feature-desc">Scegli chi sei e segna le bottiglie sul tuo conto: catalogo da 30 super alcolici, prezzi modificabili.</div>
-          <div class="feature-arrow">Vai alla pagina →</div>
-        </a>
-
-        <a href="classifica.html" class="feature-card tint-mint fade-up">
-          <div class="feature-icon" aria-hidden="true">
-            <!-- trofeo -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7.5 4.2h9l-.4 6.2c-.2 2.5-2 4.2-4.1 4.2s-3.9-1.7-4.1-4.2Z"/>
-              <path d="M7.4 6H5.2c-.1 2.6 1 4.3 2.6 4.6M16.6 6h2.2c.1 2.6-1 4.3-2.6 4.6"/>
-              <path d="M12 14.8l.1 2.6M9.4 20.7c.9-.6 4.3-.7 5.2 0"/>
-            </svg>
-          </div>
-          <div class="feature-name">Classifica Spugne</div>
-          <div class="feature-desc">Chi sta bevendo di più? Classifica live con barre animate e spesa stimata a persona.</div>
-          <div class="feature-arrow">Vai alla pagina →</div>
-        </a>
-
-        <a href="spese.html" class="feature-card tint-sky fade-up">
-          <div class="feature-icon" aria-hidden="true">
-            <!-- monete -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="9.2" cy="9.4" r="5.6"/>
-              <path d="M15.6 8.1a5.6 5.6 0 1 1-6.9 8.4"/>
-              <path d="M10.8 8c-2-1.4-4.4.3-3.7 2.1.6 1.7 3.4.9 3.5 2.7.1 1.7-2.6 2.2-3.9.9M9.1 6.9v.9M9 13.9v.9"/>
-            </svg>
-          </div>
-          <div class="feature-name">Spese &amp; Debiti</div>
-          <div class="feature-desc">Taxi, pizze, spesa al market: l'algoritmo alla Splitwise calcola chi deve dare cosa a chi.</div>
-          <div class="feature-arrow">Vai alla pagina →</div>
-        </a>
-
-        <a href="galleria.html" class="feature-card tint-blush fade-up">
-          <div class="feature-icon" aria-hidden="true">
-            <!-- macchina fotografica -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3.6 8.2c0-.9.7-1.7 1.6-1.7h2.2l1.3-2h6.6l1.3 2h2.2c.9 0 1.6.8 1.6 1.7v9c0 .9-.7 1.6-1.6 1.6H5.2c-.9 0-1.6-.7-1.6-1.6Z"/>
-              <circle cx="12" cy="12.6" r="3.4"/>
-              <circle cx="17.8" cy="9.3" r="0.4"/>
-            </svg>
-          </div>
-          <div class="feature-name">Galleria Polaroid</div>
-          <div class="feature-desc">Carica le foto della serata e guarda la parete riempirsi di Polaroid con didascalia e data.</div>
-          <div class="feature-arrow">Vai alla pagina →</div>
-        </a>
-
-        <a href="perle.html" class="feature-card tint-butter fade-up">
-          <div class="feature-icon" aria-hidden="true">
-            <!-- fumetto -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 6.3C4 5 5 4 6.3 4h11.4C19 4 20 5 20 6.3v7.2c0 1.3-1 2.3-2.3 2.3H10l-4.2 3.7.3-3.7h-.4A1.7 1.7 0 0 1 4 14Z"/>
-              <path d="M8.6 8.6c-.7.4-1 1-1 1.9M12.7 8.6c-.7.4-1 1-1 1.9"/>
-            </svg>
-          </div>
-          <div class="feature-name">Muro delle Perle</div>
-          <div class="feature-desc">Battute memorabili, gaffe e tormentoni: appesi al muro come post-it colorati, per sempre.</div>
-          <div class="feature-arrow">Vai alla pagina →</div>
-        </a>
-
-        <a href="oscar.html" class="feature-card tint-mint fade-up">
-          <div class="feature-icon" aria-hidden="true">
-            <!-- ciak -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3.8 10.5h16.4v8.3c0 .9-.7 1.6-1.6 1.6H5.4c-.9 0-1.6-.7-1.6-1.6Z"/>
-              <path d="M4.2 10.4 3.5 7.2 19 3.6l.9 3.3ZM7.4 9.6l2.3-3.2M11.6 8.6l2.3-3.2M15.8 7.7l2.3-3.2"/>
-            </svg>
-          </div>
-          <div class="feature-name">Oscar della Vacanza</div>
-          <div class="feature-desc">Vota i compagni per i premi più assurdi. Classifiche live per ogni categoria, zero giurie serie.</div>
-          <div class="feature-arrow">Vai alla pagina →</div>
-        </a>
-
-        <a href="prossima.html" class="feature-card tint-sky fade-up">
-          <div class="feature-icon" aria-hidden="true">
-            <!-- segnaposto mappa -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 21.3s-6.4-5.6-6.4-10.4a6.4 6.4 0 1 1 12.8 0c0 4.8-6.4 10.4-6.4 10.4Z"/>
-              <circle cx="12" cy="10.7" r="2.4"/>
-            </svg>
-          </div>
-          <div class="feature-name">Prossima Tappa</div>
-          <div class="feature-desc">Proponi mete per la prossima serata e votatele insieme. In caso di parità decide Birozze, a caso.</div>
-          <div class="feature-arrow">Vai alla pagina →</div>
-        </a>
-      </div>
-    </div>
-  </section>
-
   <!-- FOOTER -->
   <footer class="page-footer">
     <div class="page-wrap">
-      Fatto con cura per la compagnia della vacanza studio &middot; <strong>Birozze v6.0</strong>
+      Fatto con cura per la compagnia della vacanza studio &middot; <strong>Birozze v7.0</strong>
       <span class="footer-note">Bevi responsabilmente.</span>
     </div>
   </footer>

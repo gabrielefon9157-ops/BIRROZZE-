@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="960" height="700" rx="18" fill="#FFFDF6"/>
+  <text x="30" y="46" font-size="25" font-weight="800" fill="#2A2318">Palette Birrozze</text>
+  <text x="30" y="68" font-size="13" fill="#7C7158">Carta calda &#183; giallo ocra &#183; un solo pop spritz &#183; mai nero o bianco puri</text>
+
+  <!-- PRIMARIO -->
+  <text x="30" y="104" font-size="11" font-weight="700" letter-spacing="2" fill="#A99D82">PRIMARIO — GIALLO OCRA</text>
+  <rect x="30" y="114" width="218" height="76" rx="12" fill="#E3A320"/>
+  <text x="44" y="144" font-size="13.5" font-weight="700" fill="#2A2318">Ocra · --amber</text>
+  <text x="44" y="166" font-size="12.5" font-family="Consolas, monospace" fill="#4A2F06">#E3A320</text>
+  <rect x="260" y="114" width="218" height="76" rx="12" fill="#F2C75C"/>
+  <text x="274" y="144" font-size="13.5" font-weight="700" fill="#2A2318">Ocra chiaro · --amber-light</text>
+  <text x="274" y="166" font-size="12.5" font-family="Consolas, monospace" fill="#4A2F06">#F2C75C</text>
+  <rect x="490" y="114" width="218" height="76" rx="12" fill="#B77E10"/>
+  <text x="504" y="144" font-size="13.5" font-weight="700" fill="#FFFDF6">Ocra scuro · --amber-dark</text>
+  <text x="504" y="166" font-size="12.5" font-family="Consolas, monospace" fill="#FBF0D0">#B77E10</text>
+  <rect x="720" y="114" width="218" height="76" rx="12" fill="#FBF0D0" stroke="#E5DCC3"/>
+  <text x="734" y="144" font-size="13.5" font-weight="700" fill="#2A2318">Ocra pallido · --amber-pale</text>
+  <text x="734" y="166" font-size="12.5" font-family="Consolas, monospace" fill="#7C7158">#FBF0D0</text>
+
+  <!-- NEUTRI -->
+  <text x="30" y="224" font-size="11" font-weight="700" letter-spacing="2" fill="#A99D82">NEUTRI — CARTA CALDA</text>
+  <rect x="30" y="234" width="174" height="76" rx="12" fill="#F6F1E3" stroke="#E5DCC3"/>
+  <text x="44" y="264" font-size="13" font-weight="700" fill="#2A2318">Carta · --cream</text>
+  <text x="44" y="286" font-size="12" font-family="Consolas, monospace" fill="#7C7158">#F6F1E3</text>
+  <rect x="214" y="234" width="174" height="76" rx="12" fill="#EFE7D2" stroke="#E5DCC3"/>
+  <text x="228" y="264" font-size="13" font-weight="700" fill="#2A2318">Carta scura · --cream-deep</text>
+  <text x="228" y="286" font-size="12" font-family="Consolas, monospace" fill="#7C7158">#EFE7D2</text>
+  <rect x="398" y="234" width="174" height="76" rx="12" fill="#FFFDF6" stroke="#E5DCC3"/>
+  <text x="412" y="264" font-size="13" font-weight="700" fill="#2A2318">Schiuma · --foam</text>
+  <text x="412" y="286" font-size="12" font-family="Consolas, monospace" fill="#7C7158">#FFFDF6</text>
+  <rect x="582" y="234" width="174" height="76" rx="12" fill="#2A2318"/>
+  <text x="596" y="264" font-size="13" font-weight="700" fill="#F6F1E3">Inchiostro · --espresso</text>
+  <text x="596" y="286" font-size="12" font-family="Consolas, monospace" fill="#A99D82">#2A2318</text>
+  <rect x="766" y="234" width="174" height="76" rx="12" fill="#4A3F2C"/>
+  <text x="780" y="264" font-size="13" font-weight="700" fill="#F6F1E3">Inchiostro soft</text>
+  <text x="780" y="286" font-size="12" font-family="Consolas, monospace" fill="#A99D82">#4A3F2C</text>
+
+  <!-- ACCENTI -->
+  <text x="30" y="344" font-size="11" font-weight="700" letter-spacing="2" fill="#A99D82">ACCENTI — CON PARSIMONIA</text>
+  <rect x="30" y="354" width="218" height="76" rx="12" fill="#E8552F"/>
+  <text x="44" y="384" font-size="13.5" font-weight="700" fill="#FFF7EF">Spritz · --copper</text>
+  <text x="44" y="406" font-size="12.5" font-family="Consolas, monospace" fill="#FBD9CC">#E8552F</text>
+  <rect x="260" y="354" width="218" height="76" rx="12" fill="#F0764F"/>
+  <text x="274" y="384" font-size="13.5" font-weight="700" fill="#FFF7EF">Spritz chiaro · --copper-light</text>
+  <text x="274" y="406" font-size="12.5" font-family="Consolas, monospace" fill="#FBD9CC">#F0764F</text>
+  <rect x="490" y="354" width="218" height="76" rx="12" fill="#8CB369"/>
+  <text x="504" y="384" font-size="13.5" font-weight="700" fill="#2A2318">Verde luppolo</text>
+  <text x="504" y="406" font-size="12.5" font-family="Consolas, monospace" fill="#3E4F2E">#8CB369</text>
+
+  <!-- PASTELLI -->
+  <text x="30" y="464" font-size="11" font-weight="700" letter-spacing="2" fill="#A99D82">PASTELLI — LAVAGGI E TINTE CARD</text>
+  <rect x="30" y="474" width="218" height="76" rx="12" fill="#F7E8B5" stroke="#E5DCC3"/>
+  <text x="44" y="504" font-size="13.5" font-weight="700" fill="#2A2318">Burro · --butter</text>
+  <text x="44" y="526" font-size="12.5" font-family="Consolas, monospace" fill="#7C7158">#F7E8B5</text>
+  <rect x="260" y="474" width="218" height="76" rx="12" fill="#DFEBDD" stroke="#E5DCC3"/>
+  <text x="274" y="504" font-size="13.5" font-weight="700" fill="#2A2318">Menta · --mint</text>
+  <text x="274" y="526" font-size="12.5" font-family="Consolas, monospace" fill="#7C7158">#DFEBDD</text>
+  <rect x="490" y="474" width="218" height="76" rx="12" fill="#DEEBF1" stroke="#E5DCC3"/>
+  <text x="504" y="504" font-size="13.5" font-weight="700" fill="#2A2318">Cielo · --sky</text>
+  <text x="504" y="526" font-size="12.5" font-family="Consolas, monospace" fill="#7C7158">#DEEBF1</text>
+  <rect x="720" y="474" width="218" height="76" rx="12" fill="#F6DFD3" stroke="#E5DCC3"/>
+  <text x="734" y="504" font-size="13.5" font-weight="700" fill="#2A2318">Blush · --blush</text>
+  <text x="734" y="526" font-size="12.5" font-family="Consolas, monospace" fill="#7C7158">#F6DFD3</text>
+
+  <!-- TESTO -->
+  <text x="30" y="584" font-size="11" font-weight="700" letter-spacing="2" fill="#A99D82">TESTO E LINEE</text>
+  <rect x="30" y="594" width="218" height="76" rx="12" fill="#4A4232"/>
+  <text x="44" y="624" font-size="13.5" font-weight="700" fill="#F6F1E3">Testo · --text-body</text>
+  <text x="44" y="646" font-size="12.5" font-family="Consolas, monospace" fill="#A99D82">#4A4232</text>
+  <rect x="260" y="594" width="218" height="76" rx="12" fill="#7C7158"/>
+  <text x="274" y="624" font-size="13.5" font-weight="700" fill="#F6F1E3">Testo soft · --text-soft</text>
+  <text x="274" y="646" font-size="12.5" font-family="Consolas, monospace" fill="#EFE7D2">#7C7158</text>
+  <rect x="490" y="594" width="218" height="76" rx="12" fill="#A99D82"/>
+  <text x="504" y="624" font-size="13.5" font-weight="700" fill="#2A2318">Testo mute · --text-mute</text>
+  <text x="504" y="646" font-size="12.5" font-family="Consolas, monospace" fill="#4A4232">#A99D82</text>
+  <rect x="720" y="594" width="218" height="76" rx="12" fill="#E5DCC3"/>
+  <text x="734" y="624" font-size="13.5" font-weight="700" fill="#2A2318">Bordo · --border</text>
+  <text x="734" y="646" font-size="12.5" font-family="Consolas, monospace" fill="#7C7158">#E5DCC3</text>
+</svg>
