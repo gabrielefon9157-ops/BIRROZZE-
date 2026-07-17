@@ -10,70 +10,17 @@
 
   /* ---- Dati di default (primo avvio) ---- */
   var DEFAULT_STATE = {
-    crew: [
-      { id: "gabbo",  name: "Gabbo",  drinks: { jack: 3, absolut: 1 }, is_active: true  },
-      { id: "teo",    name: "Teo",    drinks: { absolut: 4, malibu: 1 }, is_active: true },
-      { id: "vale",   name: "Vale",   drinks: { hendricks: 2 },         is_active: true  },
-      { id: "sara",   name: "Sara",   drinks: { baileys: 2, campari: 1 }, is_active: true },
-      { id: "marco",  name: "Marco",  drinks: { jack: 1 },              is_active: true  }
-    ],
-    expenses: [
-      {
-        id: "exp_init_1",
-        desc: "Spesa supermercato (cibo e bevande)",
-        amount: 45.50,
-        paidBy: "gabbo",
-        splitAmong: ["gabbo", "teo", "vale", "sara", "marco"]
-      },
-      {
-        id: "exp_init_2",
-        desc: "Taxi per il club della serata",
-        amount: 25.00,
-        paidBy: "teo",
-        splitAmong: ["gabbo", "teo", "vale", "sara", "marco"]
-      }
-    ],
-    photos: [
-      {
-        id: "ph1",
-        url: "https://images.unsplash.com/photo-1539635278303-d4002c07eae3?auto=format&fit=crop&w=600&q=80",
-        caption: "Primo aperitivo in spiaggia al tramonto!",
-        author: "Gabbo",
-        rot: -2.2
-      },
-      {
-        id: "ph2",
-        url: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=600&q=80",
-        caption: "Il brindisi di inizio vacanza studio!",
-        author: "Vale",
-        rot: 1.8
-      },
-      {
-        id: "ph3",
-        url: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=600&q=80",
-        caption: "La camminata finita in risate",
-        author: "Sara",
-        rot: -1.2
-      }
-    ],
-    perle: [
-      { id: "p1", text: "«Giuro che l'ultimo lo salto» — poi ne ordina altri tre.", author: "Teo",  c: "#FFF0EB", rot: -2   },
-      { id: "p2", text: "Il navigatore diceva 200 metri. Abbiamo fatto 4 km a piedi.", author: "Sara", c: "#EDF7FC", rot: 2    },
-      { id: "p3", text: "«Io non ballo», 10 secondi prima di salire sul cubo.",       author: "Vale", c: "#F0FBF2", rot: -1.5 }
-    ],
+    crew: [],
+    expenses: [],
+    photos: [],
+    perle: [],
     oscars: [
-      { id: "o1", title: "Il più ritardatario",     votes: { gabbo: 3, teo: 1    } },
-      { id: "o2", title: "Miglior ballerino",        votes: { vale: 5, sara: 2    } },
-      { id: "o3", title: "Quello che si perde",      votes: { marco: 4            } },
-      { id: "o4", title: "Re/Regina dell'aperitivo", votes: { gabbo: 2, teo: 3    } }
+      { id: "o1", title: "Il più ritardatario",     votes: {} },
+      { id: "o2", title: "Miglior ballerino",        votes: {} },
+      { id: "o3", title: "Quello che si perde",      votes: {} },
+      { id: "o4", title: "Re/Regina dell'aperitivo", votes: {} }
     ],
-    nextOpts: [
-      { id: "n1", label: "Aperitivo in spiaggia",   votes: 2 },
-      { id: "n2", label: "Discoteca al Papeete",     votes: 4 },
-      { id: "n3", label: "Serata karaoke",           votes: 1 },
-      { id: "n4", label: "Falò sulla spiaggia",      votes: 3 },
-      { id: "n5", label: "Cena di pesce",            votes: 0 }
-    ],
+    nextOpts: [],
     elapsed: 0,
     running: false,
     alcoholSplitMode: "uguale",
