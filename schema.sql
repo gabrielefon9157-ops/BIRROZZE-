@@ -124,6 +124,15 @@ CREATE TABLE IF NOT EXISTS public.drinking_votes (
 );
 
 
+-- 12. Registro Email (login con Google o Email)
+CREATE TABLE IF NOT EXISTS public.emails (
+    email TEXT PRIMARY KEY,
+    name TEXT,
+    provider TEXT DEFAULT 'email' NOT NULL, -- 'email' | 'google' | 'google-mock'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    last_login TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- ============================================================
 -- ABILITAZIONE REALTIME (WebSocket per aggiornamenti live)
 -- ============================================================
@@ -138,6 +147,7 @@ ALTER TABLE public.oscar_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposal_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.drinking_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.emails ENABLE ROW LEVEL SECURITY;
 
 -- Rimozione preventiva delle policy se già esistenti per evitare errori di duplicazione
 DROP POLICY IF EXISTS "Accesso totale pubblico sessions" ON public.sessions;
@@ -151,6 +161,7 @@ DROP POLICY IF EXISTS "Accesso totale pubblico oscar_votes" ON public.oscar_vote
 DROP POLICY IF EXISTS "Accesso totale pubblico proposals" ON public.proposals;
 DROP POLICY IF EXISTS "Accesso totale pubblico proposal_votes" ON public.proposal_votes;
 DROP POLICY IF EXISTS "Accesso totale pubblico drinking_votes" ON public.drinking_votes;
+DROP POLICY IF EXISTS "Accesso totale pubblico emails" ON public.emails;
 
 -- Consenti accesso in lettura/scrittura anonimo pubblico per la vacanza studio
 CREATE POLICY "Accesso totale pubblico sessions" ON public.sessions FOR ALL USING (true) WITH CHECK (true);
@@ -164,6 +175,7 @@ CREATE POLICY "Accesso totale pubblico oscar_votes" ON public.oscar_votes FOR AL
 CREATE POLICY "Accesso totale pubblico proposals" ON public.proposals FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico proposal_votes" ON public.proposal_votes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico drinking_votes" ON public.drinking_votes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Accesso totale pubblico emails" ON public.emails FOR ALL USING (true) WITH CHECK (true);
 
 -- Registrazione sicura delle tabelle al canale Realtime di Supabase (evita errori se già presenti)
 DO $$
@@ -274,12 +286,22 @@ BEGIN
 
         -- drinking_votes
         IF NOT EXISTS (
-            SELECT 1 FROM pg_publication_rel pr 
-            JOIN pg_class c ON pr.prrelid = c.oid 
-            JOIN pg_publication p ON pr.prpubid = p.oid 
+            SELECT 1 FROM pg_publication_rel pr
+            JOIN pg_class c ON pr.prrelid = c.oid
+            JOIN pg_publication p ON pr.prpubid = p.oid
             WHERE p.pubname = 'supabase_realtime' AND c.relname = 'drinking_votes'
         ) THEN
             ALTER PUBLICATION supabase_realtime ADD TABLE public.drinking_votes;
+        END IF;
+
+        -- emails
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr
+            JOIN pg_class c ON pr.prrelid = c.oid
+            JOIN pg_publication p ON pr.prpubid = p.oid
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'emails'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.emails;
         END IF;
     END IF;
 END $$;

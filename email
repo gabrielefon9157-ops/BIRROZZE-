@@ -1,0 +1,18 @@
+# ============================================================
+# REGISTRO EMAIL — BIRROZZE
+# ============================================================
+# Elenco degli indirizzi email degli utenti che hanno effettuato
+# l'accesso all'app (login con Google o con Email).
+#
+# NOTA TECNICA IMPORTANTE: essendo Birrozze un sito statico, il
+# browser NON può scrivere direttamente in questo file. La fonte
+# di verità è la tabella `public.emails` su Supabase, aggiornata
+# automaticamente a ogni login.
+#
+# Per aggiornare questo file: apri il widget "Gestione Gruppo"
+# nella navbar dell'app e premi "Scarica registro email" — verrà
+# scaricato un file chiamato `email` con l'elenco aggiornato, da
+# sostituire a questo.
+#
+# Formato righe: email <TAB> nome <TAB> provider <TAB> ultimo accesso
+# ============================================================

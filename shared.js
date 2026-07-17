@@ -7,6 +7,18 @@
   "use strict";
 
   var STORAGE_KEY = "birozze_state_v6";
+  var AUTH_KEY    = "birrozze_auth_profile";
+
+  /* ---- Cancello d'accesso: senza profilo si finisce su login.html ----
+     Vive qui (e non nelle singole pagine) così ogni pagina che carica
+     shared.js è protetta automaticamente. login.html è esente. */
+  (function authGate() {
+    var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+    if (page === "login.html") return;
+    var logged = false;
+    try { logged = !!localStorage.getItem(AUTH_KEY); } catch (e) {}
+    if (!logged) location.replace("login.html");
+  })();
 
   var DEFAULT_STATE = {
     crew: [],
@@ -166,8 +178,12 @@
 
   function setActiveGroupId(id) {
     try {
-      if (id) localStorage.setItem(GROUP_STORAGE_KEY, id);
-      else    localStorage.removeItem(GROUP_STORAGE_KEY);
+      if (id) {
+        localStorage.setItem(GROUP_STORAGE_KEY, id);
+      } else {
+        localStorage.removeItem(GROUP_STORAGE_KEY);
+        localStorage.removeItem("birozze_active_group_name");
+      }
     } catch (e) {}
   }
 
@@ -188,7 +204,185 @@
     } catch (e) {}
   }
 
+  /* ============================================================
+     AUTENTICAZIONE (Google + Email) E REGISTRO EMAIL
+     ============================================================ */
+  var _cloudReady = false;
+  var _cloudReadyCbs = [];
+
+  /* Esegue cb appena il client Supabase è inizializzato (o subito se lo è già) */
+  function whenCloudReady(cb) {
+    if (_cloudReady) { try { cb(); } catch (e) {} }
+    else _cloudReadyCbs.push(cb);
+  }
+
+  function getAuthProfile() {
+    try {
+      var raw = localStorage.getItem(AUTH_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function setAuthProfile(profile) {
+    try { localStorage.setItem(AUTH_KEY, JSON.stringify(profile)); } catch (e) {}
+  }
+
+  function isValidEmail(s) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || "").trim());
+  }
+
+  /* Colleziona l'email nella tabella public.emails (best-effort, mai bloccante) */
+  function recordEmail(profile) {
+    if (!profile || !profile.email) return;
+    whenCloudReady(function () {
+      if (!sb) return;
+      sb.from("emails").upsert({
+        email: profile.email,
+        name: profile.name || "",
+        provider: profile.provider || "email",
+        last_login: new Date().toISOString()
+      }, { onConflict: "email" }).then(function (res) {
+        if (res.error) console.warn("[Birrozze] Registro email:", res.error);
+      });
+    });
+  }
+
+  /* Login con email + nome */
+  function signInWithEmail(email, name) {
+    email = String(email || "").trim().toLowerCase();
+    name  = String(name || "").trim();
+    if (!isValidEmail(email)) return { ok: false, error: "Inserisci un'email valida." };
+    if (!name)                return { ok: false, error: "Inserisci il tuo nome." };
+    var profile = { email: email, name: name, provider: "email", ts: Date.now() };
+    setAuthProfile(profile);
+    recordEmail(profile);
+    return { ok: true, profile: profile };
+  }
+
+  /* Verifica dalla API pubblica di Supabase se il provider Google è abilitato */
+  async function isGoogleConfigured() {
+    try {
+      var conf = getSupabaseConfig();
+      if (!conf.supabaseUrl) return false;
+      var r = await fetch(conf.supabaseUrl + "/auth/v1/settings", {
+        headers: { apikey: conf.supabaseKey }
+      });
+      var j = await r.json();
+      return !!(j && j.external && j.external.google);
+    } catch (e) { return false; }
+  }
+
+  /* Login con Google: OAuth reale se configurato sulla dashboard Supabase,
+     altrimenti accesso simulato (per i test locali) usando email+nome del form */
+  async function signInWithGoogle(fallbackEmail, fallbackName) {
+    var configured = sb ? await isGoogleConfigured() : false;
+
+    if (configured) {
+      try {
+        var res = await sb.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: location.origin + location.pathname }
+        });
+        if (!res.error) return { ok: true, redirecting: true };
+      } catch (e) {
+        console.warn("[Birrozze] OAuth Google fallito, uso il mock:", e);
+      }
+    }
+
+    // Mock trasparente: nessuna credenziale Google richiesta, serve solo l'email nel form
+    var email = String(fallbackEmail || "").trim().toLowerCase();
+    var name  = String(fallbackName || "").trim() || "Utente Google";
+    if (!isValidEmail(email)) {
+      return { ok: false, error: "Provider Google non configurato su Supabase: compila l'email qui sopra per l'accesso simulato di test." };
+    }
+    var profile = { email: email, name: name, provider: "google-mock", ts: Date.now() };
+    setAuthProfile(profile);
+    recordEmail(profile);
+    return { ok: true, profile: profile, mocked: true };
+  }
+
+  /* Completa il rientro dal redirect OAuth (chiamata da login.html) */
+  async function completeOAuthLogin() {
+    if (!sb) return null;
+    try {
+      var res = await sb.auth.getSession();
+      var session = res.data && res.data.session;
+      if (session && session.user && session.user.email) {
+        var u = session.user;
+        var meta = u.user_metadata || {};
+        var profile = {
+          email: u.email.toLowerCase(),
+          name: meta.full_name || meta.name || u.email.split("@")[0],
+          provider: "google",
+          ts: Date.now()
+        };
+        setAuthProfile(profile);
+        recordEmail(profile);
+        return profile;
+      }
+    } catch (e) {
+      console.warn("[Birrozze] completeOAuthLogin:", e);
+    }
+    return null;
+  }
+
+  function logout() {
+    try { localStorage.removeItem(AUTH_KEY); } catch (e) {}
+    setActiveProfileId(null);
+    if (sb && sb.auth) { try { sb.auth.signOut(); } catch (e) {} }
+    location.href = "login.html";
+  }
+
+  /* Scarica il registro email dal cloud come file locale chiamato "email" */
+  async function downloadEmailsFile() {
+    if (!sb) { toast("Non connesso al database."); return; }
+    var res = await sb.from("emails").select("*").order("created_at", { ascending: true });
+    if (res.error) { toast("Errore nel recupero del registro email."); return; }
+    var lines = (res.data || []).map(function (r) {
+      return r.email + "\t" + (r.name || "") + "\t" + (r.provider || "") + "\t" + (r.last_login || "");
+    });
+    var content = "# Registro email Birrozze — esportato il " + new Date().toISOString() + "\n" +
+                  "# email\tnome\tprovider\tultimo accesso\n" +
+                  lines.join("\n") + "\n";
+    var blob = new Blob([content], { type: "text/plain" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "email";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    toast("Registro email scaricato (" + lines.length + " indirizzi).");
+  }
+
+  /* ---- Nome personalizzato del gruppo ---- */
+  var GROUP_NAME_KEY = "birozze_active_group_name";
+
+  function getActiveGroupName() {
+    try { return localStorage.getItem(GROUP_NAME_KEY); } catch (e) { return null; }
+  }
+
+  async function updateGroupName(newName) {
+    var gid = getActiveGroupId();
+    newName = String(newName || "").trim();
+    if (!gid || !sb || !newName) return false;
+    var res = await sb.from("sessions").update({ name: newName, updated_at: new Date() }).eq("id", gid);
+    if (res.error) {
+      console.warn("[Birrozze] updateGroupName:", res.error);
+      return false;
+    }
+    try { localStorage.setItem(GROUP_NAME_KEY, newName); } catch (e) {}
+    return true;
+  }
+
   function promptForProfile(callback) {
+    // Sulla pagina di login il profilo non va mai richiesto
+    var pageNow = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+    if (pageNow === "login.html") {
+      if (callback) callback();
+      return;
+    }
+
     var activeId = getActiveProfileId();
     if (activeId) {
       var found = _state.crew.some(function(p) { return p.id === activeId; });
@@ -198,12 +392,28 @@
       }
     }
 
-    var name = prompt("Inserisci il tuo nome per unirti a questo gruppo condiviso:");
-    if (!name) {
-      if (callback) callback();
-      return;
+    /* Con il login attivo il nome arriva dal profilo: niente più prompt() */
+    var auth = getAuthProfile();
+    var name = null;
+
+    if (auth && auth.name) {
+      // Se nella crew c'è già qualcuno con lo stesso nome, è lui/lei
+      var existing = null;
+      _state.crew.forEach(function (p) {
+        if (p.name.toLowerCase() === auth.name.toLowerCase()) existing = p;
+      });
+      if (existing) {
+        setActiveProfileId(existing.id);
+        if (callback) callback();
+        return;
+      }
+      name = auth.name;
+    } else {
+      // Fallback legacy se per qualche motivo manca il profilo login
+      name = prompt("Inserisci il tuo nome per unirti a questo gruppo condiviso:");
+      if (name) name = name.trim();
     }
-    name = name.trim();
+
     if (!name) {
       if (callback) callback();
       return;
@@ -213,7 +423,7 @@
     _state.crew.push({ id: newId, name: name, drinks: {}, is_active: true });
     setActiveProfileId(newId);
     save();
-    
+
     toast("Benvenuto " + name + "! Il tuo profilo è attivo.");
     if (callback) callback();
   }
@@ -307,6 +517,11 @@
         // Se non esiste, la sessione viene inizializzata con lo stato locale
         await createSupabaseSession(sessionId);
         return;
+      }
+
+      // Memorizza il nome personalizzato del gruppo per navbar e modal
+      if (sess.name) {
+        try { localStorage.setItem(GROUP_NAME_KEY, sess.name); } catch (e) {}
       }
 
       var crewList = results[1].data || [];
@@ -811,13 +1026,19 @@
       var gid = getActiveGroupId();
       if (sb && gid) {
         pill.className = "nav-group-pill online";
-        pill.querySelector(".label").textContent = gid;
+        // Mostra il nome personalizzato del gruppo; il codice resta nel title
+        pill.querySelector(".label").textContent = getActiveGroupName() || gid;
+        pill.title = "Codice gruppo: " + gid;
       } else {
         pill.className = "nav-group-pill offline";
         pill.querySelector(".label").textContent = "Locale";
+        pill.title = "";
       }
     };
     updatePill();
+
+    // Riallinea la pillola quando lo stato viene aggiornato dal cloud
+    window.addEventListener("birrozzeStateChange", updatePill);
 
     // Aggiungi Modal alla fine del body
     var modalHtml = 
@@ -829,12 +1050,21 @@
           '</div>' +
           '<div class="birozze-modal-body">' +
             '<div id="groupActiveInfo" style="display:none;">' +
-              '<p style="font-size:14px;color:var(--text-body);margin-bottom:8px;">Sei connesso al gruppo condiviso in tempo reale:</p>' +
-              '<div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--amber-dark);text-align:center;background:var(--butter);padding:14px;border-radius:var(--r);letter-spacing:0.05em;margin-bottom:12px;" id="modalGroupCode">---</div>' +
+              '<p style="font-size:14px;color:var(--text-body);margin-bottom:10px;">Sei connesso al gruppo condiviso in tempo reale.</p>' +
+              '<label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);">Nome del gruppo</label>' +
+              '<div style="display:flex;gap:8px;margin:5px 0 12px;">' +
+                '<input type="text" id="groupNameInput" maxlength="40" placeholder="Es. Vacanza Ibiza 2026" style="flex:1;padding:9px 12px;font-size:14px;">' +
+                '<button class="btn btn-primary" id="saveGroupNameBtn" style="padding:9px 16px;font-size:13px;">Salva</button>' +
+              '</div>' +
+              '<div style="text-align:center;background:var(--butter);padding:10px 14px;border-radius:var(--r);margin-bottom:12px;">' +
+                '<span style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-soft);">Codice invito</span><br>' +
+                '<span style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--amber-dark);letter-spacing:0.05em;" id="modalGroupCode">---</span>' +
+              '</div>' +
               '<div style="display:flex;gap:8px;">' +
                 '<button class="btn btn-primary" id="copyInviteLink" style="flex:1;font-size:13px;padding:10px;">Copia link invito</button>' +
                 '<button class="btn btn-outline" id="disconnectGroup" style="flex:1;font-size:13px;padding:10px;color:var(--copper);border-color:rgba(232,85,47,.3);">Disconnetti</button>' +
               '</div>' +
+              '<button class="btn btn-ghost" id="downloadEmailsBtn" style="width:100%;margin-top:8px;font-size:12.5px;padding:9px;">Scarica registro email (file &laquo;email&raquo;)</button>' +
             '</div>' +
             '<div id="groupInactiveInfo">' +
               '<p style="font-size:13.5px;color:var(--text-soft);line-height:1.5;margin-bottom:12px;">Crea un gruppo condiviso per registrare consumazioni, perle e spese insieme ai tuoi amici in tempo reale.</p>' +
@@ -847,6 +1077,10 @@
               '</div>' +
               '<div style="text-align:center;margin:12px 0;font-size:12px;color:var(--text-mute);font-weight:700;">OPPURE</div>' +
               '<button class="btn btn-outline" id="btnCreateGroup" style="width:100%;padding:11px;font-weight:700;">Crea Nuovo Gruppo Condiviso</button>' +
+            '</div>' +
+            '<div style="border-top:1px dashed var(--border);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;">' +
+              '<span id="modalUserInfo" style="font-size:12px;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>' +
+              '<button class="btn btn-ghost" id="logoutBtn" style="flex-shrink:0;font-size:12.5px;padding:7px 14px;">Esci</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -866,12 +1100,44 @@
         document.getElementById("groupActiveInfo").style.display = "block";
         document.getElementById("groupInactiveInfo").style.display = "none";
         document.getElementById("modalGroupCode").textContent = gid;
+        document.getElementById("groupNameInput").value = getActiveGroupName() || ("Gruppo " + gid);
       } else {
         document.getElementById("groupActiveInfo").style.display = "none";
         document.getElementById("groupInactiveInfo").style.display = "block";
       }
 
+      var auth = getAuthProfile();
+      document.getElementById("modalUserInfo").textContent =
+        auth ? (auth.name + " · " + auth.email) : "";
+
       overlay.classList.add("open");
+    });
+
+    // Salva il nome personalizzato del gruppo
+    document.getElementById("saveGroupNameBtn").addEventListener("click", async function() {
+      var input = document.getElementById("groupNameInput");
+      var newName = input.value.trim();
+      if (!newName) { toast("Il nome del gruppo non può essere vuoto."); return; }
+      var btn = this;
+      btn.disabled = true;
+      var ok = await updateGroupName(newName);
+      btn.disabled = false;
+      if (ok) {
+        updatePill();
+        toast("Nome del gruppo aggiornato!");
+      } else {
+        toast("Impossibile aggiornare il nome (offline?).");
+      }
+    });
+
+    // Scarica registro email
+    document.getElementById("downloadEmailsBtn").addEventListener("click", function() {
+      downloadEmailsFile();
+    });
+
+    // Logout profilo
+    document.getElementById("logoutBtn").addEventListener("click", function() {
+      if (confirm("Uscire dal profilo? Tornerai alla pagina di accesso.")) logout();
     });
 
     // Chiudi modal
@@ -959,6 +1225,11 @@
   /* ---- Avvio e Sottoscrizione automatica ---- */
   ensureSupabaseSdk(function() {
     initSupabase();
+
+    // Sblocca le callback in attesa del client (login, registro email...)
+    _cloudReady = true;
+    _cloudReadyCbs.splice(0).forEach(function (cb) { try { cb(); } catch (e) {} });
+
     var gid = getActiveGroupId();
     if (sb && gid) {
       loadFromSupabase(gid).then(function() {
@@ -1182,7 +1453,17 @@
     compressImageFile:    compressImageFile,
     getActiveProfileId:   getActiveProfileId,
     setActiveProfileId:   setActiveProfileId,
-    promptForProfile:     promptForProfile
+    promptForProfile:     promptForProfile,
+    /* Autenticazione e gruppi */
+    getAuthProfile:       getAuthProfile,
+    signInWithEmail:      signInWithEmail,
+    signInWithGoogle:     signInWithGoogle,
+    completeOAuthLogin:   completeOAuthLogin,
+    logout:               logout,
+    whenCloudReady:       whenCloudReady,
+    getActiveGroupName:   getActiveGroupName,
+    updateGroupName:      updateGroupName,
+    downloadEmailsFile:   downloadEmailsFile
   };
 
 })(window);
