@@ -2,11 +2,10 @@
  * BIROZZE — config.js
  * 
  * Configurazione delle chiavi per la connessione al database Supabase.
- * Se lasciate vuote, l'applicazione chiederà all'utente di inserirle
- * direttamente dall'interfaccia (cliccando sul badge di connessione nella navbar)
- * e le memorizzerà localmente nel browser.
+ * Se lasciate vuote, l'applicazione chiederà al client di configurarle
+ * dall'interfaccia.
  */
 window.BIRROZZE_CONFIG = {
-  supabaseUrl: "", // Esempio: "https://xxxx.supabase.co"
-  supabaseKey: ""  // Esempio: "eyJhbGciOiJIUzI1NiIsInR5..." (Anon Public Key)
+  supabaseUrl: "https://pkdqefzogmuvrewadden.supabase.co",
+  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHFlZnpvZ211dnJld2FkZGVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODEwNDQsImV4cCI6MjA5OTg1NzA0NH0.zYMeyTfsErPP1tSstu2zRy7MVmiy2EjN5kQmGO2wxEs"
 };
