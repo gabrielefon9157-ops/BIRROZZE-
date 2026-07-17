@@ -113,15 +113,45 @@
       margin-top: var(--space-md);
       padding: 12px;
       animation-duration: .5s;
-    }
-
-    /* ---- EMPTY STATE ---- */
+        /* ---- EMPTY STATE ---- */
     .empty-state {
       text-align: center;
       padding: 48px 0;
       color: var(--text-mute);
     }
     .empty-state p { margin-top: 12px; font-size: 14px; }
+
+    /* Person Selector */
+    .person-selector {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: var(--space-lg);
+    }
+    .person-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 99px;
+      border: 2px solid var(--border);
+      background: var(--foam);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-body);
+      cursor: pointer;
+      transition: border-color .18s, background .18s, transform .15s, box-shadow .18s;
+      box-shadow: var(--shadow-xs);
+      position: relative;
+    }
+    .person-pill:hover { border-color: var(--amber-dark); transform: scale(1.03); }
+    .person-pill.active {
+      border-color: var(--amber);
+      background: var(--amber-pale);
+      color: var(--espresso);
+      box-shadow: 0 4px 16px rgba(227,163,32,.2);
+    }
   </style>
 </head>
 <body>
@@ -150,6 +180,12 @@
   </header>
 
   <main class="page-wrap">
+
+    <!-- SELETTORE PERSONA -->
+    <section aria-labelledby="who-heading" class="fade-up" style="margin-bottom: var(--space-lg);">
+      <h2 id="who-heading" style="font-size:16px; margin-bottom: var(--space-sm); text-align: center; color: var(--text-soft); font-weight: 600;">Chi sta votando adesso?</h2>
+      <div class="person-selector" id="personSelector"></div>
+    </section>
 
     <div class="tappa-layout">
 
@@ -195,9 +231,41 @@
     BS.markActiveNav();
     BS.initReveal();
 
+    var state = BS.get();
+    var activePerson = state.crew.length > 0 ? state.crew[0].id : null;
+
+    /* ---- Render Person Selector ---- */
+    function renderPersonSelector() {
+      var state = BS.get();
+      if (state.crew.length === 0) {
+        document.getElementById("personSelector").innerHTML = '<p class="crew-empty">Nessun membro del gruppo. Aggiungili dalla pagina Consumazioni!</p>';
+        return;
+      }
+      var html = state.crew.map(function (p) {
+        var cls = p.id === activePerson ? "person-pill active" : "person-pill";
+        // Controlla se ha già votato qualcosa
+        var hasVotedAny = false;
+        state.nextOpts.forEach(function (o) {
+          if (o.voters && o.voters.indexOf(p.id) > -1) hasVotedAny = true;
+        });
+        var checkmark = hasVotedAny ? " ✓" : "";
+        return '<button class="' + cls + '" data-id="' + p.id + '">' +
+          '<span>' + BS.esc(p.name) + checkmark + '</span>' +
+        '</button>';
+      }).join('');
+      document.getElementById("personSelector").innerHTML = html;
+    }
+
     /* ---- Render Proposals ---- */
     function renderProposals() {
       var state   = BS.get();
+      
+      // Assicura che voters esista e ricalcoli i voti coerentemente
+      state.nextOpts.forEach(function (o) {
+        if (!o.voters) o.voters = [];
+        o.votes = o.voters.length;
+      });
+
       var options = state.nextOpts.slice().sort(function (a, b) { return b.votes - a.votes; });
       var total   = options.reduce(function (a, o) { return a + o.votes; }, 0);
       var maxV    = options.length > 0 ? options[0].votes : 0;
@@ -214,15 +282,28 @@
 
       var html = options.map(function (o) {
         var pct = total > 0 ? (o.votes / total * 100) : 0;
+        
+        // Costruisci lista nomi votanti
+        var voterNames = o.voters.map(function (pid) {
+          var found = state.crew.find(function (p) { return p.id === pid; });
+          return found ? found.name : null;
+        }).filter(Boolean).join(", ");
+        
+        var voterText = voterNames ? " — " + BS.esc(voterNames) : "";
+
+        // Controlla se la persona attiva ha votato per questa opzione
+        var hasVoted = activePerson && o.voters.indexOf(activePerson) > -1;
+        var voteButtonClass = hasVoted ? "btn btn-primary vote-btn" : "btn btn-ghost vote-btn";
+
         return '<div class="proposal-item">' +
           '<div class="proposal-bg" style="width:' + pct + '%"></div>' +
           '<div class="proposal-info">' +
             '<div class="proposal-label">' + BS.esc(o.label) + '</div>' +
-            '<div class="proposal-votes">' + o.votes + ' voti</div>' +
+            '<div class="proposal-votes">' + o.votes + ' voti<span style="font-style: italic; opacity: 0.8; font-size:11px; margin-left: 6px;">' + voterText + '</span></div>' +
           '</div>' +
           '<div class="proposal-actions">' +
-            (o.votes > 0 ? '<button class="btn btn-ghost unvote-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 10px;" title="Togli un voto" aria-label="Togli un voto a ' + BS.esc(o.label) + '">−</button>' : '') +
-            '<button class="btn btn-ghost vote-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 12px;">Vota</button>' +
+            (hasVoted ? '<button class="btn btn-ghost unvote-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 10px;" title="Togli il tuo voto" aria-label="Togli il tuo voto a ' + BS.esc(o.label) + '">−</button>' : '') +
+            '<button class="' + voteButtonClass + '" data-id="' + o.id + '" style="font-size:12px;padding:6px 12px;">' + (hasVoted ? 'Votato' : 'Vota') + '</button>' +
             '<button class="btn btn-ghost remove-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 10px;color:var(--text-mute);" title="Elimina proposta" aria-label="Elimina ' + BS.esc(o.label) + '">×</button>' +
           '</div>' +
         '</div>';
@@ -247,15 +328,27 @@
     }
 
     /* ---- Events ---- */
+
+    // Selezione persona
+    document.getElementById("personSelector").addEventListener("click", function (e) {
+      var pill = e.target.closest("[data-id]");
+      if (pill) {
+        activePerson = pill.getAttribute("data-id");
+        renderPersonSelector();
+        renderProposals();
+      }
+    });
+
     document.getElementById("addProposalForm").addEventListener("submit", function (e) {
       e.preventDefault();
       var val = document.getElementById("proposalInput").value.trim();
       if (!val) return;
       var state = BS.get();
-      state.nextOpts.push({ id: BS.uid(), label: val, votes: 0 });
+      state.nextOpts.push({ id: BS.uid(), label: val, votes: 0, voters: [] });
       BS.save();
       document.getElementById("proposalInput").value = "";
       renderProposals();
+      renderPersonSelector();
     });
 
     document.getElementById("proposalsList").addEventListener("click", function (e) {
@@ -264,20 +357,53 @@
       var unvoteBtn = e.target.closest(".unvote-btn");
 
       if (unvoteBtn) {
-        var uid   = unvoteBtn.getAttribute("data-id");
-        var uState = BS.get();
-        uState.nextOpts.forEach(function (o) { if (o.id === uid && o.votes > 0) o.votes--; });
+        var id = unvoteBtn.getAttribute("data-id");
+        var state = BS.get();
+        state.nextOpts.forEach(function (o) {
+          if (o.id === id) {
+            if (!o.voters) o.voters = [];
+            var idx = o.voters.indexOf(activePerson);
+            if (idx > -1) o.voters.splice(idx, 1);
+            o.votes = o.voters.length;
+          }
+        });
         BS.save();
         renderProposals();
+        renderPersonSelector();
+        BS.toast("Voto rimosso!");
         return;
       }
 
       if (voteBtn) {
-        var id    = voteBtn.getAttribute("data-id");
+        var id = voteBtn.getAttribute("data-id");
+        if (!activePerson) {
+          BS.toast("Seleziona prima chi sei!");
+          return;
+        }
+
         var state = BS.get();
-        state.nextOpts.forEach(function (o) { if (o.id === id) o.votes++; });
+
+        // 1. Togli il voto precedente di questo utente da QUALSIASI proposta
+        state.nextOpts.forEach(function (o) {
+          if (!o.voters) o.voters = [];
+          var idx = o.voters.indexOf(activePerson);
+          if (idx > -1) o.voters.splice(idx, 1);
+          o.votes = o.voters.length;
+        });
+
+        // 2. Aggiungi il voto alla nuova proposta
+        state.nextOpts.forEach(function (o) {
+          if (o.id === id) {
+            if (!o.voters) o.voters = [];
+            if (o.voters.indexOf(activePerson) === -1) o.voters.push(activePerson);
+            o.votes = o.voters.length;
+          }
+        });
+
         BS.save();
         renderProposals();
+        renderPersonSelector();
+        BS.toast("Voto registrato!");
         return;
       }
 
@@ -290,6 +416,7 @@
         state.nextOpts = state.nextOpts.filter(function (o) { return o.id !== id; });
         BS.save();
         renderProposals();
+        renderPersonSelector();
         return;
       }
     });
@@ -321,6 +448,7 @@
     });
 
     /* ---- Init ---- */
+    renderPersonSelector();
     renderProposals();
 
   })();
