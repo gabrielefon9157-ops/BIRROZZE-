@@ -99,6 +99,19 @@
     }
     .login-submit:disabled { opacity: .6; cursor: wait; transform: none; }
 
+    .login-mode-toggle {
+      background: none;
+      border: none;
+      margin-top: 2px;
+      font-size: 12.5px;
+      color: var(--text-soft);
+      cursor: pointer;
+      padding: 4px;
+      align-self: center;
+    }
+    .login-mode-toggle b { color: var(--amber-dark); }
+    .login-mode-toggle:hover b { text-decoration: underline; }
+
     .login-divider {
       display: flex;
       align-items: center;
@@ -154,6 +167,11 @@
       text-align: left;
     }
     .login-error.show { display: block; }
+    .login-error.info {
+      background: rgba(227,163,32,.1);
+      border-color: rgba(227,163,32,.4);
+      color: var(--amber-dark);
+    }
 
     .login-privacy {
       margin-top: var(--space-lg);
@@ -181,18 +199,23 @@
 
     <div class="login-kicker">Birrozze · Taccuino Condiviso</div>
     <h1 class="login-title" id="login-heading">Entra e <span class="hand">apri la serata.</span></h1>
-    <p class="login-sub">Un accesso, un profilo: il tuo nome ti seguirà in tutti i gruppi, senza doverlo riscrivere mai più.</p>
+    <p class="login-sub">Il tuo account Birrozze: una volta dentro, l'app sa chi sei — niente più "chi sei stasera?".</p>
 
     <form class="login-form" id="loginForm">
       <div class="field">
         <label for="loginEmail">La tua email</label>
         <input type="email" id="loginEmail" placeholder="nome@esempio.it" autocomplete="email" required>
       </div>
-      <div class="field">
+      <div class="field" id="nameField" style="display:none;">
         <label for="loginName">Come ti chiamano gli amici?</label>
-        <input type="text" id="loginName" placeholder="Es. Gabbo" maxlength="20" autocomplete="nickname" required>
+        <input type="text" id="loginName" placeholder="Es. Gabbo" maxlength="20" autocomplete="nickname">
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="Almeno 6 caratteri" minlength="6" autocomplete="current-password" required>
       </div>
       <button type="submit" class="login-submit" id="emailLoginBtn">Accedi</button>
+      <button type="button" class="login-mode-toggle" id="modeToggle">Non hai un account? <b>Registrati</b></button>
     </form>
 
     <div class="login-divider" aria-hidden="true">oppure</div>
@@ -240,29 +263,68 @@
       });
     });
 
-    function showError(msg) {
+    function showError(msg, isInfo) {
       var el = document.getElementById("loginError");
       el.textContent = msg;
       el.classList.add("show");
+      el.classList.toggle("info", !!isInfo);
     }
     function clearError() {
-      document.getElementById("loginError").classList.remove("show");
+      var el = document.getElementById("loginError");
+      el.classList.remove("show");
+      el.classList.remove("info");
     }
 
-    /* Accesso con Email + Nome */
+    /* Modalità: Accedi <-> Registrati */
+    var isSignup = false;
+    function applyMode() {
+      document.getElementById("nameField").style.display = isSignup ? "" : "none";
+      document.getElementById("loginName").required = isSignup;
+      document.getElementById("loginPassword").setAttribute("autocomplete", isSignup ? "new-password" : "current-password");
+      document.getElementById("emailLoginBtn").textContent = isSignup ? "Crea il mio account" : "Accedi";
+      document.getElementById("modeToggle").innerHTML = isSignup
+        ? "Hai già un account? <b>Accedi</b>"
+        : "Non hai un account? <b>Registrati</b>";
+    }
+    document.getElementById("modeToggle").addEventListener("click", function () {
+      isSignup = !isSignup;
+      clearError();
+      applyMode();
+    });
+    applyMode();
+
+    /* Accesso / registrazione con email e password (account vero) */
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
       clearError();
-      var res = BS.signInWithEmail(
-        document.getElementById("loginEmail").value,
-        document.getElementById("loginName").value
-      );
-      if (res.ok) {
-        BS.toast("Benvenuto, " + res.profile.name + "!");
-        setTimeout(function () { location.replace("index.html"); }, 350);
-      } else {
-        showError(res.error);
-      }
+      var btn = document.getElementById("emailLoginBtn");
+      btn.disabled = true;
+
+      BS.whenCloudReady(function () {
+        var email = document.getElementById("loginEmail").value;
+        var pass  = document.getElementById("loginPassword").value;
+        var name  = document.getElementById("loginName").value;
+
+        var op = isSignup
+          ? BS.signUpWithPassword(email, pass, name)
+          : BS.signInWithPassword(email, pass);
+
+        op.then(function (res) {
+          btn.disabled = false;
+          if (!res.ok) { showError(res.error); return; }
+          if (res.needsConfirm) {
+            showError("Account creato! Ti abbiamo inviato un'email di conferma: clicca il link nella tua casella, poi torna qui e accedi.", true);
+            isSignup = false;
+            applyMode();
+            return;
+          }
+          BS.toast((res.profile ? "Benvenuto, " + res.profile.name : "Benvenuto") + "!");
+          setTimeout(function () { location.replace("index.html"); }, 350);
+        }).catch(function () {
+          btn.disabled = false;
+          showError("Errore imprevisto. Riprova.");
+        });
+      });
     });
 
     /* Accesso con Google (OAuth reale, o simulato se il provider

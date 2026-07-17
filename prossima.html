@@ -183,12 +183,6 @@
 
   <main class="page-wrap">
 
-    <!-- SELETTORE PERSONA -->
-    <section aria-labelledby="who-heading" class="fade-up" style="margin-bottom: var(--space-lg);">
-      <h2 id="who-heading" style="font-size:16px; margin-bottom: var(--space-sm); text-align: center; color: var(--text-soft); font-weight: 600;">Chi sta votando adesso?</h2>
-      <div class="person-selector" id="personSelector"></div>
-    </section>
-
     <div class="tappa-layout">
 
       <!-- SINISTRA: Lista proposte -->
@@ -210,7 +204,7 @@
         <div class="winner-stamp" id="winnerStamp" style="display:none;">In programma!</div>
         <div class="winner-sub" id="winnerSub">Votate una proposta per iniziare.</div>
         <button class="btn btn-outline random-btn" id="randomBtn">
-          Scegli a caso (+3 voti)
+          Scegli a caso
         </button>
       </div>
 
@@ -234,30 +228,9 @@
     BS.markActiveNav();
     BS.initReveal();
 
-    var state = BS.get();
-    var activePerson = state.crew.length > 0 ? state.crew[0].id : null;
-
-    /* ---- Render Person Selector ---- */
-    function renderPersonSelector() {
-      var state = BS.get();
-      if (state.crew.length === 0) {
-        document.getElementById("personSelector").innerHTML = '<p class="crew-empty">Nessun membro del gruppo. Aggiungili dalla pagina Consumazioni!</p>';
-        return;
-      }
-      var html = state.crew.map(function (p) {
-        var cls = p.id === activePerson ? "person-pill active" : "person-pill";
-        // Controlla se ha già votato qualcosa
-        var hasVotedAny = false;
-        state.nextOpts.forEach(function (o) {
-          if (o.voters && o.voters.indexOf(p.id) > -1) hasVotedAny = true;
-        });
-        var checkmark = hasVotedAny ? " ✓" : "";
-        return '<button class="' + cls + '" data-id="' + p.id + '">' +
-          '<span>' + BS.esc(p.name) + checkmark + '</span>' +
-        '</button>';
-      }).join('');
-      document.getElementById("personSelector").innerHTML = html;
-    }
+    /* L'identità del votante arriva dall'account */
+    BS.promptForProfile();
+    var activePerson = BS.getActiveProfileId();
 
     /* ---- Render Proposals ---- */
     function renderProposals() {
@@ -332,16 +305,6 @@
 
     /* ---- Events ---- */
 
-    // Selezione persona
-    document.getElementById("personSelector").addEventListener("click", function (e) {
-      var pill = e.target.closest("[data-id]");
-      if (pill) {
-        activePerson = pill.getAttribute("data-id");
-        renderPersonSelector();
-        renderProposals();
-      }
-    });
-
     document.getElementById("addProposalForm").addEventListener("submit", function (e) {
       e.preventDefault();
       var val = document.getElementById("proposalInput").value.trim();
@@ -351,7 +314,6 @@
       BS.save();
       document.getElementById("proposalInput").value = "";
       renderProposals();
-      renderPersonSelector();
     });
 
     document.getElementById("proposalsList").addEventListener("click", function (e) {
@@ -372,7 +334,6 @@
         });
         BS.save();
         renderProposals();
-        renderPersonSelector();
         BS.toast("Voto rimosso!");
         return;
       }
@@ -380,8 +341,9 @@
       if (voteBtn) {
         var id = voteBtn.getAttribute("data-id");
         if (!activePerson) {
-          BS.toast("Seleziona prima chi sei!");
-          return;
+          BS.promptForProfile();
+          activePerson = BS.getActiveProfileId();
+          if (!activePerson) { BS.toast("Profilo non disponibile: ricarica la pagina."); return; }
         }
 
         var state = BS.get();
@@ -405,7 +367,6 @@
 
         BS.save();
         renderProposals();
-        renderPersonSelector();
         BS.toast("Voto registrato!");
         return;
       }
@@ -419,7 +380,6 @@
         state.nextOpts = state.nextOpts.filter(function (o) { return o.id !== id; });
         BS.save();
         renderProposals();
-        renderPersonSelector();
         return;
       }
     });
@@ -440,10 +400,9 @@
         if (cur >= steps) {
           clearInterval(interval);
           var winner = state.nextOpts[Math.floor(Math.random() * state.nextOpts.length)];
-          winner.votes += 3;
-          BS.save();
-          renderProposals();
-          document.getElementById("winnerSub").textContent = "Scelto a caso! (+3 voti bonus)";
+          document.getElementById("winnerName").textContent = winner.label;
+          document.getElementById("winnerSub").textContent  = "Scelta dal destino!";
+          document.getElementById("winnerStamp").style.display = "block";
           BS.toast("Birrozze ha scelto: " + winner.label);
           btn.disabled = false;
         }
@@ -451,7 +410,6 @@
     });
 
     /* ---- Init ---- */
-    renderPersonSelector();
     renderProposals();
 
   })();

@@ -270,7 +270,6 @@
         </div>
         <div class="preview-fields">
           <input type="text" id="captionInput" placeholder="Descrivi questo momento..." maxlength="60" aria-label="Didascalia foto">
-          <input type="text" id="authorInput"  placeholder="Chi scatta?"             maxlength="16" aria-label="Autore foto">
         </div>
         <div class="preview-actions">
           <button class="btn btn-primary" id="savePhotoBtn">Appendi al Muro</button>
@@ -359,7 +358,6 @@
         document.getElementById("uploadPrompt").style.display = "none";
         document.getElementById("previewWrap").style.display = "block";
         document.getElementById("captionInput").value = "";
-        document.getElementById("authorInput").value = "";
       };
       reader.readAsDataURL(file);
     });
@@ -380,7 +378,6 @@
           document.getElementById("uploadPrompt").style.display = "none";
           document.getElementById("previewWrap").style.display = "block";
           document.getElementById("captionInput").value = "";
-          document.getElementById("authorInput").value = "";
         };
         reader.readAsDataURL(file);
       }
@@ -396,7 +393,9 @@
     document.getElementById("savePhotoBtn").addEventListener("click", function () {
       if (!pendingFile) return;
       var caption = document.getElementById("captionInput").value.trim() || "Vacanza Studio!";
-      var author  = document.getElementById("authorInput").value.trim() || "Anonimo";
+      // L'autore è chi è loggato: niente più campo "Chi scatta?"
+      var auth    = BS.getAuthProfile();
+      var author  = (auth && auth.name) || "Anonimo";
       var btn = this;
       btn.disabled = true;
       btn.textContent = "Compressione...";

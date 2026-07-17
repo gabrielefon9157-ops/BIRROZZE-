@@ -59,6 +59,44 @@
     }
     .person-pill .pill-remove:hover { color: var(--copper); }
 
+    /* Banner identità: chi sei lo dice l'account, non un selettore */
+    .me-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--foam);
+      border: 1.5px solid rgba(227,163,32,.35);
+      border-radius: var(--r-lg);
+      padding: 12px 16px;
+      margin-bottom: var(--space-md);
+      box-shadow: var(--shadow-xs);
+    }
+    .me-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--amber-light), var(--amber-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--espresso);
+      flex-shrink: 0;
+    }
+    .me-name { font-weight: 700; font-size: 15.5px; color: var(--espresso); }
+    .me-sub  { font-size: 12px; color: var(--text-soft); }
+    .crew-manage summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-soft);
+      padding: 6px 2px;
+    }
+    .crew-manage[open] summary { color: var(--amber-dark); }
+    .crew-manage .person-selector { margin-top: var(--space-md); justify-content: flex-start; }
+
     .add-person-wrap {
       display: inline-flex;
       align-items: center;
@@ -257,15 +295,24 @@
   <header class="page-hero">
     <span class="kicker">Diario Bevute</span>
     <h1>Consumazioni</h1>
-    <p>Seleziona il tuo profilo, scegli la bottiglia dal catalogo e aggiungi la consumazione al tuo conto serata.</p>
+    <p>Scegli la bottiglia dal catalogo: la consumazione finisce dritta sul tuo conto, l'app sa già chi sei.</p>
   </header>
 
   <main class="page-wrap" id="mainContent">
 
-    <!-- SELETTORE PERSONA -->
-    <section aria-labelledby="who-heading" class="fade-up">
-      <h2 id="who-heading" style="font-size:17px; margin-bottom: var(--space-md);">Chi sei stasera?</h2>
-      <div class="person-selector" id="personSelector"></div>
+    <!-- IDENTITÀ DALL'ACCOUNT + GESTIONE GRUPPO -->
+    <section aria-label="Il tuo profilo e il gruppo" class="fade-up">
+      <div class="me-banner">
+        <div class="me-avatar" id="meAvatar" aria-hidden="true">?</div>
+        <div>
+          <div class="me-name" id="meName">—</div>
+          <div class="me-sub">Sei tu: ogni bevuta che aggiungi va sul tuo conto.</div>
+        </div>
+      </div>
+      <details class="crew-manage">
+        <summary>Gestisci il gruppo (aggiungi o rimuovi amici)</summary>
+        <div class="person-selector" id="personSelector"></div>
+      </details>
     </section>
 
     <hr class="divider">
@@ -292,7 +339,7 @@
     <section aria-labelledby="recap-heading" class="fade-up" id="recapSection">
       <h2 id="recap-heading" style="font-size:17px; margin-bottom: var(--space-md);">Il tuo conto stasera</h2>
       <div id="recapContent" style="color: var(--text-soft); font-size: 14px; text-align: center; padding: var(--space-md) 0;">
-        Seleziona il tuo profilo sopra per vedere il riepilogo.
+        Il tuo conto apparirà qui appena aggiungi la prima bevuta.
       </div>
     </section>
 
@@ -316,25 +363,32 @@
     BS.markActiveNav();
     BS.initReveal();
 
-    var state = BS.get();
-    var savedId = BS.getActiveProfileId();
-    var activePerson = (savedId && state.crew.some(function(p) { return p.id === savedId; }))
-      ? savedId 
-      : (state.crew.length > 0 ? state.crew[0].id : null);
+    /* L'identità arriva dall'account: assicura il profilo nella crew */
+    BS.promptForProfile();
+    var activePerson = BS.getActiveProfileId();
     var activeFilter = "Tutti";
     var CATS = ["Tutti", "Whisky", "Vodka", "Gin", "Rum", "Tequila", "Cognac", "Liquori"];
 
-    /* ---- Render Person Selector ---- */
+    /* ---- Banner identità ---- */
+    function renderMe() {
+      var auth = BS.getAuthProfile();
+      var meName = (auth && auth.name) || "—";
+      document.getElementById("meName").textContent = meName;
+      document.getElementById("meAvatar").textContent = meName.charAt(0).toUpperCase();
+    }
+
+    /* ---- Lista gruppo (solo gestione: niente più selezione identità) ---- */
     function renderPersonSelector() {
       var state = BS.get();
+      var myId = BS.getActiveProfileId();
       var html = state.crew.map(function (p) {
         var count = 0; for (var k in p.drinks) count += p.drinks[k];
-        var cls = p.id === activePerson ? "person-pill active" : "person-pill";
-        return '<button class="' + cls + '" data-id="' + p.id + '" aria-pressed="' + (p.id === activePerson ? "true" : "false") + '">' +
-          '<span>' + BS.esc(p.name) + '</span>' +
+        var isMe = p.id === myId;
+        return '<span class="person-pill' + (isMe ? ' active' : '') + '">' +
+          '<span>' + BS.esc(p.name) + (isMe ? ' (tu)' : '') + '</span>' +
           '<span class="count">' + count + '</span>' +
-          '<span class="pill-remove" data-remove="' + p.id + '" title="Rimuovi dal gruppo">×</span>' +
-        '</button>';
+          (isMe ? '' : '<span class="pill-remove" data-remove="' + p.id + '" title="Rimuovi dal gruppo">×</span>') +
+        '</span>';
       }).join('');
 
       html += '<div class="add-person-wrap">' +
@@ -441,9 +495,9 @@
 
     /* ---- Event Delegation ---- */
 
-    // Selezione persona / rimozione
+    // Gestione gruppo: rimozione e aggiunta (l'identità non si cambia più a mano)
     document.getElementById("personSelector").addEventListener("click", function (e) {
-      // Rimuovi persona
+      // Rimuovi persona (mai se stessi: il × non compare sul proprio profilo)
       var removeBtn = e.target.closest("[data-remove]");
       if (removeBtn) {
         e.stopPropagation();
@@ -452,26 +506,13 @@
         BS.get().crew.forEach(function (p) { if (p.id === rid) personName = p.name; });
         if (confirm("Rimuovere " + personName + " dal gruppo?\nVerranno eliminati anche le sue bevute, le spese che ha pagato e i suoi voti Oscar.")) {
           BS.removeCrewMember(rid);
-          if (activePerson === rid) {
-            var crew = BS.get().crew;
-            activePerson = crew.length > 0 ? crew[0].id : null;
-          }
           renderPersonSelector();
           renderRecap();
         }
         return;
       }
 
-      // Seleziona persona
-      var pill = e.target.closest("[data-id]");
-      if (pill && !e.target.closest("[data-remove]")) {
-        activePerson = pill.getAttribute("data-id");
-        BS.setActiveProfileId(activePerson);
-        renderPersonSelector();
-        renderRecap();
-      }
-
-      // Aggiungi persona
+      // Aggiungi un amico (es. chi non usa l'app ma divide le spese)
       if (e.target.id === "addPersonBtn") {
         var input = document.getElementById("newPersonInput");
         var val = input.value.trim();
@@ -483,11 +524,8 @@
         if (!exists) {
           state.crew.push({ id: newId, name: val, drinks: {}, is_active: true });
           BS.save();
-          activePerson = newId;
-          BS.setActiveProfileId(activePerson);
           input.value = "";
           renderPersonSelector();
-          renderRecap();
         } else {
           BS.toast("C'è già \"" + val + "\" nel gruppo!");
           input.focus();
@@ -527,7 +565,11 @@
       var drink = BS.getDrinkById(did);
       if (!drink) return;
 
-      if (!activePerson) { alert("Seleziona prima il tuo profilo!"); return; }
+      if (!activePerson) {
+        BS.promptForProfile();
+        activePerson = BS.getActiveProfileId();
+        if (!activePerson) { BS.toast("Profilo non disponibile: ricarica la pagina."); return; }
+      }
 
       var state = BS.get();
       var person = null;
@@ -596,6 +638,7 @@
     });
 
     /* ---- Init ---- */
+    renderMe();
     renderPersonSelector();
     renderCatFilters();
     renderDrinkGrid();

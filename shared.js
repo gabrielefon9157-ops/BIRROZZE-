@@ -259,6 +259,73 @@
     return { ok: true, profile: profile };
   }
 
+  /* ---- Account veri con password (Supabase Auth) ---- */
+
+  async function signInWithPassword(email, password) {
+    email = String(email || "").trim().toLowerCase();
+    if (!isValidEmail(email))            return { ok: false, error: "Inserisci un'email valida." };
+    if (!password || password.length < 6) return { ok: false, error: "La password deve avere almeno 6 caratteri." };
+    if (!sb) return { ok: false, error: "Connessione al server non disponibile. Riprova tra qualche secondo." };
+    try {
+      var res = await sb.auth.signInWithPassword({ email: email, password: password });
+      if (res.error) {
+        var m = res.error.message || "";
+        var msg = /invalid login credentials/i.test(m) ? "Email o password errati." :
+                  /email not confirmed/i.test(m)       ? "Email non ancora confermata: controlla la tua casella di posta." :
+                  m;
+        return { ok: false, error: msg };
+      }
+      var u = res.data.user;
+      var meta = (u && u.user_metadata) || {};
+      var profile = {
+        email: email,
+        name: meta.display_name || meta.full_name || email.split("@")[0],
+        provider: "password",
+        ts: Date.now()
+      };
+      setAuthProfile(profile);
+      recordEmail(profile);
+      return { ok: true, profile: profile };
+    } catch (e) {
+      return { ok: false, error: "Errore di rete durante l'accesso. Riprova." };
+    }
+  }
+
+  async function signUpWithPassword(email, password, name) {
+    email = String(email || "").trim().toLowerCase();
+    name  = String(name || "").trim();
+    if (!isValidEmail(email))             return { ok: false, error: "Inserisci un'email valida." };
+    if (!password || password.length < 6) return { ok: false, error: "La password deve avere almeno 6 caratteri." };
+    if (!name)                            return { ok: false, error: "Inserisci il tuo nome." };
+    if (!sb) return { ok: false, error: "Connessione al server non disponibile. Riprova tra qualche secondo." };
+    try {
+      var res = await sb.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: { display_name: name } }
+      });
+      if (res.error) {
+        var m = res.error.message || "";
+        var msg = /already registered|already been registered/i.test(m)
+          ? "Esiste già un account con questa email: prova ad accedere."
+          : m;
+        return { ok: false, error: msg };
+      }
+      var profile = { email: email, name: name, provider: "password", ts: Date.now() };
+      if (res.data && res.data.session) {
+        // Conferma email disattivata sulla dashboard: si entra subito
+        setAuthProfile(profile);
+        recordEmail(profile);
+        return { ok: true, profile: profile };
+      }
+      // Conferma email attiva: l'utente deve cliccare il link ricevuto
+      recordEmail(profile);
+      return { ok: true, needsConfirm: true };
+    } catch (e) {
+      return { ok: false, error: "Errore di rete durante la registrazione. Riprova." };
+    }
+  }
+
   /* Verifica dalla API pubblica di Supabase se il provider Google è abilitato */
   async function isGoogleConfigured() {
     try {
@@ -1455,8 +1522,11 @@
     setActiveProfileId:   setActiveProfileId,
     promptForProfile:     promptForProfile,
     /* Autenticazione e gruppi */
+    isConnected:          isConnected,
     getAuthProfile:       getAuthProfile,
     signInWithEmail:      signInWithEmail,
+    signInWithPassword:   signInWithPassword,
+    signUpWithPassword:   signUpWithPassword,
     signInWithGoogle:     signInWithGoogle,
     completeOAuthLogin:   completeOAuthLogin,
     logout:               logout,
