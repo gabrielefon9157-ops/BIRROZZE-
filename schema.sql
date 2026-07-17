@@ -1,5 +1,5 @@
 -- ============================================================
--- SCHEMA SQL RELAZIONALE PER BIROZZE (DATABASE SUPABASE)
+-- SCHEMA SQL RELAZIONALE PER BIRROZZE (DATABASE SUPABASE)
 -- ============================================================
 -- Questo schema definisce le tabelle per la sincronizzazione 
 -- multi-utente in tempo reale, garantendo transazioni atomiche
@@ -10,6 +10,9 @@
 -- 2. Clicca su "New query", incolla questo codice e premi "Run".
 -- 3. Abilita il Bucket Storage pubblico "birozze_photos" da Supabase.
 -- ============================================================
+
+-- Abilita l'estensione pgcrypto per generare gli UUID in modo nativo
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- 1. Sessioni / Gruppi
 CREATE TABLE IF NOT EXISTS public.sessions (
@@ -125,6 +128,18 @@ ALTER TABLE public.oscar_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposal_votes ENABLE ROW LEVEL SECURITY;
 
+-- Rimozione preventiva delle policy se già esistenti per evitare errori di duplicazione
+DROP POLICY IF EXISTS "Accesso totale pubblico sessions" ON public.sessions;
+DROP POLICY IF EXISTS "Accesso totale pubblico crew" ON public.crew;
+DROP POLICY IF EXISTS "Accesso totale pubblico drinks_consumed" ON public.drinks_consumed;
+DROP POLICY IF EXISTS "Accesso totale pubblico expenses" ON public.expenses;
+DROP POLICY IF EXISTS "Accesso totale pubblico photos" ON public.photos;
+DROP POLICY IF EXISTS "Accesso totale pubblico perle" ON public.perle;
+DROP POLICY IF EXISTS "Accesso totale pubblico oscars" ON public.oscars;
+DROP POLICY IF EXISTS "Accesso totale pubblico oscar_votes" ON public.oscar_votes;
+DROP POLICY IF EXISTS "Accesso totale pubblico proposals" ON public.proposals;
+DROP POLICY IF EXISTS "Accesso totale pubblico proposal_votes" ON public.proposal_votes;
+
 -- Consenti accesso in lettura/scrittura anonimo pubblico per la vacanza studio
 CREATE POLICY "Accesso totale pubblico sessions" ON public.sessions FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico crew" ON public.crew FOR ALL USING (true) WITH CHECK (true);
@@ -137,14 +152,33 @@ CREATE POLICY "Accesso totale pubblico oscar_votes" ON public.oscar_votes FOR AL
 CREATE POLICY "Accesso totale pubblico proposals" ON public.proposals FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico proposal_votes" ON public.proposal_votes FOR ALL USING (true) WITH CHECK (true);
 
--- Registrazione delle tabelle al canale Realtime di Supabase
+-- Registrazione sicura delle tabelle al canale Realtime di Supabase (evita errori se già presenti)
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.sessions;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.sessions;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.crew;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.crew;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.drinks_consumed;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.drinks_consumed;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.expenses;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.expenses;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.photos;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.photos;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.perle;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.perle;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.oscars;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.oscars;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.oscar_votes;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.oscar_votes;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.proposals;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;
+
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.proposal_votes;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.proposal_votes;
