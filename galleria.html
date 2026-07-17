@@ -145,6 +145,79 @@
       color: var(--text-mute);
     }
     .wall-empty p { margin-top: 12px; font-size: 14px; }
+
+    /* ---- LIGHTBOX (ZOOM PHOTO) ---- */
+    .lightbox-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 24, 23, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: none;
+      place-items: center;
+      padding: var(--space-lg);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .lightbox-overlay.open {
+      display: grid;
+      opacity: 1;
+    }
+    .lightbox-card {
+      background: white;
+      padding: var(--space-md) var(--space-md) var(--space-xl) var(--space-md);
+      box-shadow: var(--shadow-lg);
+      border-radius: 4px;
+      max-width: 500px;
+      width: 100%;
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+      cursor: default;
+      position: relative;
+    }
+    .lightbox-overlay.open .lightbox-card {
+      transform: scale(1);
+    }
+    .lightbox-img-wrap {
+      width: 100%;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .lightbox-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .lightbox-caption {
+      font-family: var(--font-hand);
+      font-size: 24px;
+      margin-top: var(--space-md);
+      text-align: center;
+      color: var(--espresso);
+      line-height: 1.3;
+    }
+    .lightbox-meta {
+      font-size: 11px;
+      text-align: center;
+      color: var(--text-mute);
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 32px;
+      cursor: pointer;
+      line-height: 1;
+    }
   </style>
 </head>
 <body>
@@ -244,7 +317,7 @@
 
       var html = state.photos.map(function (p) {
         var tapRot = ((parseFloat(p.rot) || 0) * 0.5).toFixed(1);
-        return '<div class="polaroid-card" style="--rot:' + (p.rot || 0) + 'deg; --tape-rot:' + tapRot + 'deg;">' +
+        return '<div class="polaroid-card" data-id="' + p.id + '" style="--rot:' + (p.rot || 0) + 'deg; --tape-rot:' + tapRot + 'deg;">' +
           '<button class="polaroid-remove" data-id="' + p.id + '" title="Rimuovi" aria-label="Rimuovi questa foto">×</button>' +
           '<img class="polaroid-img" src="' + BS.esc(p.url) + '" alt="' + BS.esc(p.caption || "Ricordo") + '" loading="lazy">' +
           '<div class="polaroid-caption">' + BS.esc(p.caption || "Che ricordi!") + '</div>' +
@@ -345,18 +418,53 @@
       });
     });
 
-    /* ---- Remove Photo ---- */
+    /* ---- Click Polaroid Wall (Remove or Zoom) ---- */
     document.getElementById("polaroidWall").addEventListener("click", function (e) {
-      var btn = e.target.closest(".polaroid-remove");
-      if (btn) {
-        var id = btn.getAttribute("data-id");
+      var removeBtn = e.target.closest(".polaroid-remove");
+      if (removeBtn) {
+        e.stopPropagation();
+        var id = removeBtn.getAttribute("data-id");
         if (confirm("Rimuovere questa Polaroid?")) {
           var state = BS.get();
           state.photos = state.photos.filter(function (p) { return p.id !== id; });
           BS.save();
           renderWall();
         }
+        return;
       }
+
+      var card = e.target.closest(".polaroid-card");
+      if (card) {
+        var id = card.getAttribute("data-id");
+        var state = BS.get();
+        var photo = state.photos.find(function (p) { return p.id === id; });
+        if (photo) {
+          openLightbox(photo);
+        }
+      }
+    });
+
+    /* ---- Lightbox Logic ---- */
+    var lightbox = document.getElementById("lightboxOverlay");
+    function openLightbox(photo) {
+      document.getElementById("lightboxImg").src = photo.url;
+      document.getElementById("lightboxCaption").textContent = photo.caption || "Che ricordi!";
+      document.getElementById("lightboxMeta").textContent = "Scattata da " + (photo.author || "Anonimo");
+      lightbox.style.display = "grid";
+      void lightbox.offsetWidth; // Force reflow
+      lightbox.classList.add("open");
+    }
+    function closeLightbox() {
+      lightbox.classList.remove("open");
+      setTimeout(function () {
+        if (!lightbox.classList.contains("open")) {
+          lightbox.style.display = "none";
+        }
+      }, 300);
+    }
+    document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", function (e) {
+      if (e.target === lightbox) closeLightbox();
     });
 
     /* ---- Init ---- */
@@ -364,5 +472,17 @@
 
   })();
   </script>
+
+  <!-- LIGHTBOX OVERLAY FOR ENLARGING PHOTOS -->
+  <div class="lightbox-overlay" id="lightboxOverlay" role="dialog" aria-modal="true" aria-label="Ingrandimento polaroid">
+    <div class="lightbox-card" id="lightboxCard">
+      <button class="lightbox-close" id="lightboxClose" aria-label="Chiudi ingrandimento">&times;</button>
+      <div class="lightbox-img-wrap">
+        <img class="lightbox-img" id="lightboxImg" src="" alt="">
+      </div>
+      <div class="lightbox-caption" id="lightboxCaption">Didascalia</div>
+      <div class="lightbox-meta" id="lightboxMeta">Autore</div>
+    </div>
+  </div>
 </body>
 </html>
