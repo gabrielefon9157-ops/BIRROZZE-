@@ -273,12 +273,15 @@
     <!-- CATALOGO DRINK -->
     <section aria-label="Catalogo drink" class="fade-up">
       <button class="catalog-toggle" id="catalogToggle" aria-expanded="false" aria-controls="catalogPanel">
-        <span>Catalogo Bevande — 30 Super Alcolici</span>
+        <span>Catalogo Bevande</span>
         <span class="catalog-toggle-arrow">▼</span>
       </button>
 
       <div class="catalog-panel" id="catalogPanel" role="region">
         <div class="cat-filters" id="catFilters"></div>
+        <div style="margin-bottom: var(--space-md); position: relative;">
+          <input type="text" id="drinkSearch" placeholder="Cerca un alcolico... (es. Jack, Gin...)" style="width: 100%; padding: 10px 16px; font-size: 14px; border: 1.5px solid var(--border); border-radius: 99px; background: var(--foam);" aria-label="Cerca alcolico">
+        </div>
         <div class="drink-grid" id="drinkGrid"></div>
       </div>
     </section>
@@ -348,8 +351,13 @@
 
     /* ---- Drink Grid ---- */
     function renderDrinkGrid() {
+      var searchInput = document.getElementById("drinkSearch");
+      var query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
       var catalog = BS.CATALOG.filter(function (d) {
-        return activeFilter === "Tutti" || d.cat === activeFilter;
+        var matchCat = activeFilter === "Tutti" || d.cat === activeFilter;
+        var matchSearch = query === "" || d.name.toLowerCase().includes(query) || d.cat.toLowerCase().includes(query);
+        return matchCat && matchSearch;
       });
 
       var html = catalog.map(function (d) {
@@ -487,6 +495,11 @@
         var btn = document.getElementById("addPersonBtn");
         if (btn) btn.click();
       }
+    });
+
+    // Catalogo: ricerca alcolici
+    document.getElementById("drinkSearch").addEventListener("input", function () {
+      renderDrinkGrid();
     });
 
     // Catalogo: filtri
