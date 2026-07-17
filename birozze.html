@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Birozze — Diario della Vacanza</title>
+  <title>Birrozze — Diario della Vacanza</title>
 
   <style>
     /* ============================================================
-       BIROZZE v5.6 — Taccuino Minimalista Centrato (100% Locale)
+       Birrozze v5.6 — Taccuino Minimalista Centrato (100% Locale)
        Design editoriale premium a colonna singola, privo di card chiuse,
        adattamento spaziale intelligente PC/iPhone (Ratio 1.5),
        ricordi pre-caricati e micro-animazioni.
@@ -1061,7 +1061,7 @@
     <!-- HEADER -->
     <header>
       <div class="brand">
-        <h1>Bir<span>ozze</span></h1>
+        <h1>Bir<span>rozze</span></h1>
         <p>Il diario condiviso per custodire i ricordi e dividere le spese della vacanza studio.</p>
         
         <div class="header-info-bar">
@@ -1081,7 +1081,7 @@
         </div>
 
         <div class="header-buttons">
-          <button class="btn btn-sec" id="aboutBtn">Cos'è Birozze?</button>
+          <button class="btn btn-sec" id="aboutBtn">Cos'è Birrozze?</button>
           <button class="btn btn-sec" id="rulesBtn">Regole</button>
           <button class="btn btn-sec" id="themeBtn" title="Cambia Tema">Tema</button>
         </div>
@@ -1164,7 +1164,7 @@
         <div class="section-title-wrap">
           <span class="section-category">Contabilità di Gruppo</span>
           <h2 class="section-title">Smistamento Spese &amp; Debiti</h2>
-          <p class="section-desc">Registra le spese comuni della vacanza (taxi, spesa, pizze) e Birozze calcolerà chi deve dare soldi a chi per saldare le pendenze in modo equo.</p>
+          <p class="section-desc">Registra le spese comuni della vacanza (taxi, spesa, pizze) e Birrozze calcolerà chi deve dare soldi a chi per saldare le pendenze in modo equo.</p>
         </div>
 
         <div class="expense-flow-grid">
@@ -1331,7 +1331,7 @@
         <div class="section-title-wrap">
           <span class="section-category">Pianificatore Serate</span>
           <h2 class="section-title">La Prossima Tappa</h2>
-          <p class="section-desc">Cosa facciamo domani? Propone nuove mete e votatele. In caso di indecisione, chiedete a Birozze di scegliere a caso!</p>
+          <p class="section-desc">Cosa facciamo domani? Propone nuove mete e votatele. In caso di indecisione, chiedete a Birrozze di scegliere a caso!</p>
         </div>
 
         <div class="prossima-grid">
@@ -1361,7 +1361,7 @@
     </div>
 
     <footer>
-      Fatto con cura per la compagnia della vacanza studio · <b>Birozze</b>.
+      Fatto con cura per la compagnia della vacanza studio · <b>Birrozze</b>.
     </footer>
   </div>
 
@@ -1408,7 +1408,7 @@
     /* ---------- STORAGE PERSISTENCE (PURE LOCAL) ---------- */
     function saveState() {
       var state = serializeState();
-      localStorage.setItem('birozze_state', JSON.stringify(state));
+      localStorage.setItem('Birrozze_state', JSON.stringify(state));
     }
 
     /* ---------- DRINK CATALOG DATA (30 Drinks) ---------- */
@@ -1505,7 +1505,7 @@
     }
 
     function loadState() {
-      var local = localStorage.getItem('birozze_state');
+      var local = localStorage.getItem('Birrozze_state');
       if (local) {
         try {
           restoreState(JSON.parse(local));
@@ -2392,7 +2392,7 @@
       var interval = setInterval(function() {
         var tempWinner = nextOpts[Math.floor(Math.random() * nextOpts.length)];
         $('#propWinnerName').textContent = tempWinner.label;
-        $('#propWinnerSub').textContent = "Birozze sta estraendo a sorte...";
+        $('#propWinnerSub').textContent = "Birrozze sta estraendo a sorte...";
         currentStep++;
         
         if (currentStep >= steps) {
@@ -2484,7 +2484,7 @@
     // 13. Azzera Serata
     $('#resetBtn').addEventListener('click', function() {
       if (confirm("Sei sicuro di voler azzerare tutti i dati, le foto e il timer di questa serata?")) {
-        localStorage.removeItem('birozze_state');
+        localStorage.removeItem('Birrozze_state');
         elapsed = 0;
         running = false;
         loadState();
@@ -2494,8 +2494,8 @@
     // 14. Info Modali
     $('#aboutBtn').addEventListener('click', function() {
       openModal(
-        "Cos'è Birozze?", 
-        "Birozze è il taccuino condiviso della vacanza studio. Permette di registrare i consumi del gruppo stappando bottiglie dal catalogo, salvare le foto dei momenti migliori in stile Polaroid, inserire le spese comuni (taxi, pizza) per calcolare chi deve a chi, e raccogliere le perle e le gaffe per non dimenticare le risate della vacanza."
+        "Cos'è Birrozze?", 
+        "Birrozze è il taccuino condiviso della vacanza studio. Permette di registrare i consumi del gruppo stappando bottiglie dal catalogo, salvare le foto dei momenti migliori in stile Polaroid, inserire le spese comuni (taxi, pizza) per calcolare chi deve a chi, e raccogliere le perle e le gaffe per non dimenticare le risate della vacanza."
       );
     });
 
