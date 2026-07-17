@@ -682,27 +682,24 @@
     realtimeChannel = sb.channel("birozze_sync_" + sessionId)
       .on("postgres_changes", { event: "*", schema: "public" }, function(payload) {
         // Scarica lo stato relazionale aggiornato dal database
-        loadFromSupabase(sessionId);
+        loadFromSupabase(sessionId).then(function() {
+          // Ricarica per allineare la UI solo se l'utente non sta scrivendo
+          if (document.activeElement && (
+            document.activeElement.tagName === "INPUT" || 
+            document.activeElement.tagName === "SELECT" || 
+            document.activeElement.tagName === "TEXTAREA"
+          )) {
+            return; 
+          }
+          location.reload();
+        });
       })
       .subscribe();
   }
 
   function triggerStateChangeEvent() {
-    window.dispatchEvent(new Event("birrozze_state_change"));
+    window.dispatchEvent(new Event("birrozzeStateChange"));
   }
-
-  /* Rilancio del rendering o reload di sicurezza quando un amico modifica qualcosa */
-  window.addEventListener("birrozze_state_change", function() {
-    if (document.activeElement && (
-      document.activeElement.tagName === "INPUT" || 
-      document.activeElement.tagName === "SELECT" || 
-      document.activeElement.tagName === "TEXTAREA"
-    )) {
-      return; // Evita di bloccare l'utente se sta scrivendo
-    }
-    // Ricarica la pagina per applicare lo stato del DB in modo pulito ed evitare clashing
-    location.reload();
-  });
 
   /* Intercetta parametri di invito nell'URL (es: ?join=CODICE) */
   function checkUrlInvite() {
