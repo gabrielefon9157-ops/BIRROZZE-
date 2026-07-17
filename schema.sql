@@ -260,3 +260,34 @@ BEGIN
         END IF;
     END IF;
 END $$;
+
+-- ============================================================
+-- ABILITAZIONE BUCKET STORAGE (per upload foto in tempo reale)
+-- ============================================================
+-- Crea il bucket storage se non esiste
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('birozze_photos', 'birozze_photos', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Rimozione preventiva delle policy del bucket per evitare errori di duplicazione
+DROP POLICY IF EXISTS "Accesso pubblico insert storage birozze_photos" ON storage.objects;
+DROP POLICY IF EXISTS "Accesso pubblico select storage birozze_photos" ON storage.objects;
+DROP POLICY IF EXISTS "Accesso pubblico delete storage birozze_photos" ON storage.objects;
+
+-- Consenti a chiunque di caricare foto nel bucket
+CREATE POLICY "Accesso pubblico insert storage birozze_photos"
+ON storage.objects FOR INSERT
+TO public
+WITH CHECK (bucket_id = 'birozze_photos');
+
+-- Consenti a chiunque di visualizzare le foto del bucket
+CREATE POLICY "Accesso pubblico select storage birozze_photos"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'birozze_photos');
+
+-- Consenti a chiunque di eliminare le foto del bucket
+CREATE POLICY "Accesso pubblico delete storage birozze_photos"
+ON storage.objects FOR DELETE
+TO public
+USING (bucket_id = 'birozze_photos');

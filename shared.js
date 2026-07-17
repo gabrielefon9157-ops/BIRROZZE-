@@ -529,16 +529,50 @@
       var newPh = newState.photos || [];
       for (var i = 0; i < oldPh.length; i++) {
         if (!newPh.find(function(p) { return p.id === oldPh[i].id; })) {
+          // Cancella riga dal DB
           await sb.from("photos").delete().eq("id", oldPh[i].id).eq("session_id", sessionId);
+          // Se era su Supabase Storage, cancella anche il file fisico
+          var oldUrl = oldPh[i].url || "";
+          if (oldUrl.indexOf("supabase.co/storage/v1/object/public") !== -1) {
+            var fileName = sessionId + "/" + oldPh[i].id + ".jpg";
+            await sb.storage.from("birozze_photos").remove([fileName]);
+          }
         }
       }
       for (var j = 0; j < newPh.length; j++) {
         var np = newPh[j];
         if (!oldPh.find(function(p) { return p.id === np.id; })) {
+          var finalUrl = np.url;
+
+          // Se l'immagine è in formato base64, prova a caricarla su Supabase Storage
+          if (finalUrl.indexOf("data:image/") === 0) {
+            try {
+              var blob = dataURLtoBlob(finalUrl);
+              var fileName = sessionId + "/" + np.id + ".jpg";
+              var uploadRes = await sb.storage
+                .from("birozze_photos")
+                .upload(fileName, blob, { contentType: "image/jpeg", cacheControl: "3600", upsert: true });
+              
+              if (!uploadRes.error) {
+                var getUrlRes = sb.storage.from("birozze_photos").getPublicUrl(fileName);
+                if (getUrlRes.data && getUrlRes.data.publicUrl) {
+                  finalUrl = getUrlRes.data.publicUrl;
+                  // Aggiorna localmente l'URL per salvare banda ed eliminare base64 pesanti da localStorage
+                  np.url = finalUrl;
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(_state));
+                }
+              } else {
+                console.warn("[Birrozze] Errore caricamento storage (fallback su base64 nel DB):", uploadRes.error);
+              }
+            } catch (storageErr) {
+              console.error("[Birrozze] Caricamento storage fallito, uso fallback base64:", storageErr);
+            }
+          }
+
           await sb.from("photos").insert({
             id: np.id,
             session_id: sessionId,
-            url: np.url,
+            url: finalUrl,
             caption: np.caption,
             author: np.author,
             rotation: np.rot
@@ -1036,6 +1070,19 @@
       img.src = evt.target.result;
     };
     reader.readAsDataURL(file);
+  }
+
+  /* ---- Convert base64 to Blob ---- */
+  function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(','), 
+        mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[arr.length - 1]), 
+        n = bstr.length, 
+        u8arr = new Uint8Array(n);
+    while(n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
   }
 
   /* ---- Public API ---- */
