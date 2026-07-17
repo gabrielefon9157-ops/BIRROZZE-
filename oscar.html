@@ -109,6 +109,32 @@
       padding: 2px 8px;
       color: var(--text-soft);
     }
+    .oscar-actions { display: flex; align-items: center; gap: 6px; }
+    .oscar-unvote {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--foam);
+      color: var(--text-mute);
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .oscar-unvote:hover { color: var(--copper); border-color: var(--copper); }
+    .oscar-del {
+      background: none;
+      border: none;
+      color: var(--text-mute);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: color .15s, background .15s;
+    }
+    .oscar-del:hover { color: var(--copper); background: rgba(232,85,47,.08); }
 
     /* ---- ADD OSCAR FORM ---- */
     .add-oscar-form {
@@ -263,17 +289,21 @@
         var rows = state.crew.map(function (p) {
           var v   = o.votes[p.id] || 0;
           var pct = tot > 0 ? (v / tot * 100) : 0;
-          return '<button class="oscar-row" data-oscar="' + o.id + '" data-cand="' + p.id + '">' +
+          return '<div class="oscar-row" role="button" tabindex="0" data-oscar="' + o.id + '" data-cand="' + p.id + '" aria-label="Vota ' + BS.esc(p.name) + '">' +
             '<div class="oscar-row-bg" style="width:' + pct + '%"></div>' +
             '<span class="oscar-cand-name">' + BS.esc(p.name) + '</span>' +
-            '<span class="oscar-cand-votes">' + v + ' voti</span>' +
-          '</button>';
+            '<span class="oscar-actions">' +
+              '<span class="oscar-cand-votes">' + v + ' voti</span>' +
+              (v > 0 ? '<button class="oscar-unvote" data-unvote-oscar="' + o.id + '" data-unvote-cand="' + p.id + '" title="Togli un voto" aria-label="Togli un voto a ' + BS.esc(p.name) + '">−</button>' : '') +
+            '</span>' +
+          '</div>';
         }).join('');
 
         return '<div class="oscar-card fade-up">' +
           '<div class="oscar-header">' +
             '<div class="oscar-title">' + BS.esc(o.title) + '</div>' +
             '<div class="oscar-leader">' + BS.esc(leaderName) + '</div>' +
+            '<button class="oscar-del" data-del="' + o.id + '" title="Elimina categoria" aria-label="Elimina la categoria ' + BS.esc(o.title) + '">×</button>' +
           '</div>' +
           '<div class="oscar-candidates">' + rows + '</div>' +
         '</div>';
@@ -286,6 +316,41 @@
 
     /* ---- Events ---- */
     document.getElementById("oscarGrid").addEventListener("click", function (e) {
+      // Elimina categoria
+      var delBtn = e.target.closest(".oscar-del");
+      if (delBtn) {
+        var oid = delBtn.getAttribute("data-del");
+        var st = BS.get();
+        var title = "";
+        st.oscars.forEach(function (o) { if (o.id === oid) title = o.title; });
+        if (confirm('Eliminare la categoria "' + title + '" e tutti i suoi voti?')) {
+          st.oscars = st.oscars.filter(function (o) { return o.id !== oid; });
+          BS.save();
+          renderOscars();
+          renderStats();
+        }
+        return;
+      }
+
+      // Togli un voto (correzione)
+      var unvote = e.target.closest(".oscar-unvote");
+      if (unvote) {
+        var uOscar = unvote.getAttribute("data-unvote-oscar");
+        var uCand  = unvote.getAttribute("data-unvote-cand");
+        var st2 = BS.get();
+        st2.oscars.forEach(function (o) {
+          if (o.id === uOscar && o.votes[uCand]) {
+            o.votes[uCand] -= 1;
+            if (o.votes[uCand] <= 0) delete o.votes[uCand];
+          }
+        });
+        BS.save();
+        renderOscars();
+        renderStats();
+        return;
+      }
+
+      // Vota
       var btn = e.target.closest(".oscar-row");
       if (!btn) return;
       var oscarId = btn.getAttribute("data-oscar");
@@ -301,6 +366,14 @@
       var name = "";
       state.crew.forEach(function (p) { if (p.id === candId) name = p.name; });
       BS.toast("Voto per " + name + " registrato!");
+    });
+
+    // Voto da tastiera sulle righe (accessibilità)
+    document.getElementById("oscarGrid").addEventListener("keydown", function (e) {
+      if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("oscar-row")) {
+        e.preventDefault();
+        e.target.click();
+      }
     });
 
     document.getElementById("addOscarBtn").addEventListener("click", function () {

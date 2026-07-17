@@ -295,6 +295,8 @@
           document.getElementById("previewImg").src = evt.target.result;
           document.getElementById("uploadPrompt").style.display = "none";
           document.getElementById("previewWrap").style.display = "block";
+          document.getElementById("captionInput").value = "";
+          document.getElementById("authorInput").value = "";
         };
         reader.readAsDataURL(file);
       }
@@ -324,9 +326,15 @@
           author: author,
           rot: (Math.random() * 8 - 4).toFixed(1)
         });
-        BS.save();
-        renderWall();
-        BS.toast("Foto appesa al muro!");
+        // Se la memoria è piena il salvataggio fallisce: annulla l'aggiunta
+        // invece di mostrare una foto che sparirebbe al prossimo ricaricamento
+        if (BS.save()) {
+          renderWall();
+          BS.toast("Foto appesa al muro!");
+        } else {
+          state.photos.shift();
+          alert("Memoria del browser piena: la foto NON è stata salvata.\nElimina qualche Polaroid vecchia e riprova.");
+        }
 
         pendingFile = null;
         document.getElementById("photoInput").value = "";

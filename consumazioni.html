@@ -189,20 +189,50 @@
     }
     .drink-tile-add:hover { background: var(--amber-dark); color: white; }
 
-    /* Auto expense toggle */
-    .auto-expense-row {
+    /* Righe del riepilogo con correzione quantità */
+    .recap-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: var(--space-md);
+      justify-content: space-between;
+      gap: 10px;
       padding: 10px 14px;
-      background: var(--mint);
-      border-radius: var(--r);
-      font-size: 13px;
-      color: var(--text-soft);
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      flex-wrap: wrap;
     }
-    .auto-expense-row input[type="checkbox"] { accent-color: var(--amber); cursor: pointer; width: 16px; height: 16px; }
-    .auto-expense-row label { cursor: pointer; user-select: none; }
+    .recap-info { display: flex; flex-direction: column; min-width: 110px; }
+    .recap-name { font-weight: 600; font-size: 14px; color: var(--espresso); }
+    .recap-cat  { font-size: 11px; color: var(--text-mute); }
+    .recap-qty { display: flex; align-items: center; gap: 8px; }
+    .qty-num { font-size: 14px; font-weight: 700; min-width: 22px; text-align: center; }
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-dark);
+      background: var(--foam);
+      color: var(--espresso);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      transition: background .15s, border-color .15s;
+    }
+    .qty-btn:hover { border-color: var(--amber); background: var(--amber-pale); }
+    .recap-right { display: flex; align-items: center; gap: 10px; }
+    .recap-sub { font-size: 15px; font-weight: 700; color: var(--amber-dark); }
+    .row-remove {
+      background: none;
+      border: none;
+      color: var(--text-mute);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+    .row-remove:hover { color: var(--copper); background: rgba(232,85,47,.08); }
   </style>
 </head>
 <body>
@@ -248,10 +278,6 @@
       </button>
 
       <div class="catalog-panel" id="catalogPanel" role="region">
-        <div class="auto-expense-row">
-          <input type="checkbox" id="autoExpense" checked>
-          <label for="autoExpense">Addebita automaticamente alla spesa comune stasera</label>
-        </div>
         <div class="cat-filters" id="catFilters"></div>
         <div class="drink-grid" id="drinkGrid"></div>
       </div>
@@ -363,7 +389,7 @@
         var qty = person.drinks[kid];
         var subtotal = qty * drink.price;
         total += subtotal;
-        rows.push({ name: drink.name, cat: drink.cat, qty: qty, price: drink.price, subtotal: subtotal });
+        rows.push({ id: kid, name: drink.name, cat: drink.cat, qty: qty, price: drink.price, subtotal: subtotal });
       }
 
       if (rows.length === 0) {
@@ -375,14 +401,19 @@
       var html = '<div style="display:grid; gap:8px; margin-bottom: var(--space-md);">';
       rows.sort(function (a, b) { return b.subtotal - a.subtotal; });
       rows.forEach(function (r) {
-        html += '<div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 14px; background:var(--foam); border:1px solid var(--border); border-radius:var(--r-sm);">' +
-          '<div>' +
-            '<span style="font-weight:600; font-size:14px;">' + BS.esc(r.name) + '</span>' +
-            '<span style="font-size:11px; color:var(--text-mute); margin-left:6px;">' + BS.esc(r.cat) + '</span>' +
+        html += '<div class="recap-row">' +
+          '<div class="recap-info">' +
+            '<span class="recap-name">' + BS.esc(r.name) + '</span>' +
+            '<span class="recap-cat">' + BS.esc(r.cat) + ' · €' + BS.fmt(r.price) + ' l\'una</span>' +
           '</div>' +
-          '<div style="text-align:right;">' +
-            '<span class="num" style="font-size:13px; color:var(--text-soft);">' + r.qty + ' × €' + BS.fmt(r.price) + '</span><br>' +
-            '<span class="num" style="font-size:15px; font-weight:700; color:var(--amber-dark);">€' + BS.fmt(r.subtotal) + '</span>' +
+          '<div class="recap-qty">' +
+            '<button class="qty-btn" data-dec="' + r.id + '" aria-label="Togli una ' + BS.esc(r.name) + '">−</button>' +
+            '<span class="num qty-num">' + r.qty + '</span>' +
+            '<button class="qty-btn" data-inc="' + r.id + '" aria-label="Aggiungi una ' + BS.esc(r.name) + '">+</button>' +
+          '</div>' +
+          '<div class="recap-right">' +
+            '<span class="num recap-sub">€' + BS.fmt(r.subtotal) + '</span>' +
+            '<button class="row-remove" data-del="' + r.id + '" title="Rimuovi dal conto" aria-label="Rimuovi ' + BS.esc(r.name) + ' dal conto">×</button>' +
           '</div>' +
         '</div>';
       });
@@ -407,11 +438,12 @@
         var rid = removeBtn.getAttribute("data-remove");
         var personName = "";
         BS.get().crew.forEach(function (p) { if (p.id === rid) personName = p.name; });
-        if (confirm("Rimuovere " + personName + " dal gruppo?")) {
-          var state = BS.get();
-          state.crew = state.crew.filter(function (p) { return p.id !== rid; });
-          if (activePerson === rid) activePerson = state.crew.length > 0 ? state.crew[0].id : null;
-          BS.save();
+        if (confirm("Rimuovere " + personName + " dal gruppo?\nVerranno eliminati anche le sue bevute, le spese che ha pagato e i suoi voti Oscar.")) {
+          BS.removeCrewMember(rid);
+          if (activePerson === rid) {
+            var crew = BS.get().crew;
+            activePerson = crew.length > 0 ? crew[0].id : null;
+          }
           renderPersonSelector();
           renderRecap();
         }
@@ -442,6 +474,9 @@
           input.value = "";
           renderPersonSelector();
           renderRecap();
+        } else {
+          BS.toast("C'è già \"" + val + "\" nel gruppo!");
+          input.focus();
         }
       }
     });
@@ -481,38 +516,55 @@
       if (!person) return;
 
       person.drinks[did] = (person.drinks[did] || 0) + 1;
-
-      // Addebito automatico se checkbox spuntata
-      if (document.getElementById("autoExpense").checked) {
-        var activePids = state.crew.filter(function (p) { return p.is_active; }).map(function (p) { return p.id; });
-        if (activePids.length > 0) {
-          state.expenses.push({
-            id: BS.uid(),
-            desc: drink.name + " (" + person.name + ")",
-            amount: drink.price,
-            paidBy: person.id,
-            splitAmong: activePids
-          });
-        }
-      }
-
       BS.save();
       renderPersonSelector();
       renderRecap();
       BS.toast("+" + drink.name + " aggiunto al conto di " + person.name);
     });
 
-    // Modifica prezzo
+    // Modifica prezzo (persistente: sopravvive al ricaricamento)
     document.getElementById("drinkGrid").addEventListener("change", function (e) {
       if (e.target.classList.contains("price-input")) {
         var did = e.target.getAttribute("data-id");
         var val = BS.parseP(e.target.value);
-        var drink = BS.getDrinkById(did);
-        if (drink) {
-          drink.price = val;
+        if (BS.getDrinkById(did)) {
+          BS.setPrice(did, val);
           e.target.value = val.toFixed(2);
+          renderRecap();
         }
       }
+    });
+
+    // Correzioni dal riepilogo: −, +, rimuovi riga
+    document.getElementById("recapContent").addEventListener("click", function (e) {
+      var inc = e.target.closest("[data-inc]");
+      var dec = e.target.closest("[data-dec]");
+      var del = e.target.closest("[data-del]");
+      if (!inc && !dec && !del) return;
+      if (!activePerson) return;
+
+      var state = BS.get();
+      var person = null;
+      state.crew.forEach(function (p) { if (p.id === activePerson) person = p; });
+      if (!person) return;
+
+      if (inc) {
+        var didUp = inc.getAttribute("data-inc");
+        person.drinks[didUp] = (person.drinks[didUp] || 0) + 1;
+      } else if (dec) {
+        var didDown = dec.getAttribute("data-dec");
+        if (person.drinks[didDown] > 1) person.drinks[didDown] -= 1;
+        else delete person.drinks[didDown];
+      } else if (del) {
+        var didDel = del.getAttribute("data-del");
+        var drink = BS.getDrinkById(didDel);
+        if (!confirm("Togliere " + (drink ? drink.name : "questa voce") + " dal conto di " + person.name + "?")) return;
+        delete person.drinks[didDel];
+      }
+
+      BS.save();
+      renderPersonSelector();
+      renderRecap();
     });
 
     // Toggle catalogo

@@ -221,8 +221,9 @@
             '<div class="proposal-votes">' + o.votes + ' voti</div>' +
           '</div>' +
           '<div class="proposal-actions">' +
+            (o.votes > 0 ? '<button class="btn btn-ghost unvote-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 10px;" title="Togli un voto" aria-label="Togli un voto a ' + BS.esc(o.label) + '">−</button>' : '') +
             '<button class="btn btn-ghost vote-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 12px;">Vota</button>' +
-            '<button class="btn btn-ghost remove-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 10px;color:var(--text-mute);">×</button>' +
+            '<button class="btn btn-ghost remove-btn" data-id="' + o.id + '" style="font-size:12px;padding:6px 10px;color:var(--text-mute);" title="Elimina proposta" aria-label="Elimina ' + BS.esc(o.label) + '">×</button>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -260,6 +261,16 @@
     document.getElementById("proposalsList").addEventListener("click", function (e) {
       var voteBtn   = e.target.closest(".vote-btn");
       var removeBtn = e.target.closest(".remove-btn");
+      var unvoteBtn = e.target.closest(".unvote-btn");
+
+      if (unvoteBtn) {
+        var uid   = unvoteBtn.getAttribute("data-id");
+        var uState = BS.get();
+        uState.nextOpts.forEach(function (o) { if (o.id === uid && o.votes > 0) o.votes--; });
+        BS.save();
+        renderProposals();
+        return;
+      }
 
       if (voteBtn) {
         var id    = voteBtn.getAttribute("data-id");
@@ -273,6 +284,9 @@
       if (removeBtn) {
         var id    = removeBtn.getAttribute("data-id");
         var state = BS.get();
+        var opt   = null;
+        state.nextOpts.forEach(function (o) { if (o.id === id) opt = o; });
+        if (opt && opt.votes > 0 && !confirm('Eliminare "' + opt.label + '" con i suoi ' + opt.votes + ' voti?')) return;
         state.nextOpts = state.nextOpts.filter(function (o) { return o.id !== id; });
         BS.save();
         renderProposals();

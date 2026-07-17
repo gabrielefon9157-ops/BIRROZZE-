@@ -266,19 +266,21 @@
     /* ---- Render Scoreboard ---- */
     function renderScoreboard() {
       var state = BS.get();
-      var sorted = state.crew.slice().sort(function (a, b) {
+      var fullSorted = state.crew.slice().sort(function (a, b) {
         return getPersonCount(b) - getPersonCount(a);
       });
 
+      // Il podio mostra sempre la top 3 reale, la ricerca filtra solo la lista
+      renderPodio(fullSorted);
+
+      var sorted = fullSorted;
       if (searchFilter) {
-        sorted = sorted.filter(function (p) {
+        sorted = fullSorted.filter(function (p) {
           return p.name.toLowerCase().indexOf(searchFilter.toLowerCase()) > -1;
         });
       }
 
-      var maxCount = Math.max(1, getPersonCount(sorted[0] || { drinks: {} }));
-
-      renderPodio(sorted);
+      var maxCount = Math.max(1, getPersonCount(fullSorted[0] || { drinks: {} }));
 
       var html = sorted.map(function (p, i) {
         var count   = getPersonCount(p);

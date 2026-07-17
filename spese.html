@@ -434,16 +434,20 @@
       BS.toast("Spesa \"" + desc + "\" aggiunta!");
     });
 
-    // Remove expense
+    // Remove expense (con conferma: un tocco accidentale non deve cancellare)
     document.getElementById("expenseTableBody").addEventListener("click", function (e) {
       var btn = e.target.closest(".remove-btn");
       if (btn) {
         var id = btn.getAttribute("data-id");
         var state = BS.get();
+        var desc = "";
+        state.expenses.forEach(function (x) { if (x.id === id) desc = x.desc; });
+        if (!confirm('Eliminare la spesa "' + desc + '"?')) return;
         state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
         BS.save();
         renderExpenseTable();
         renderDebts();
+        BS.toast("Spesa eliminata.");
       }
     });
 

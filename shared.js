@@ -76,7 +76,8 @@
     ],
     elapsed: 0,
     running: false,
-    alcoholSplitMode: "uguale"
+    alcoholSplitMode: "uguale",
+    prices: {}
   };
 
   /* ---- Catalogo drink (30 voci) ---- */
@@ -147,6 +148,7 @@
 
   /* ---- State Management ---- */
   var _state = deepClone(DEFAULT_STATE);
+  var _quotaWarned = false;
 
   function load() {
     try {
@@ -160,15 +162,52 @@
       console.error("[BirrozzeState] Errore nel caricamento:", e);
       _state = deepClone(DEFAULT_STATE);
     }
+    /* Applica al catalogo i prezzi personalizzati salvati */
+    if (_state.prices) {
+      for (var pid in _state.prices) {
+        var d = getDrinkById(pid);
+        if (d) d.price = _state.prices[pid];
+      }
+    }
     return _state;
   }
 
   function save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(_state));
+      _quotaWarned = false;
+      return true;
     } catch (e) {
       console.error("[BirrozzeState] Errore nel salvataggio:", e);
+      if (!_quotaWarned) {
+        _quotaWarned = true;
+        try { toast("Spazio esaurito: le ultime modifiche NON sono state salvate. Elimina qualche foto!"); } catch (_) {}
+      }
+      return false;
     }
+  }
+
+  /* Modifica il prezzo di un drink e lo rende persistente */
+  function setPrice(drinkId, price) {
+    var d = getDrinkById(drinkId);
+    if (!d) return false;
+    d.price = price;
+    _state.prices = _state.prices || {};
+    _state.prices[drinkId] = price;
+    return save();
+  }
+
+  /* Rimuove un membro e tutti i suoi riferimenti (spese, voti)
+     per non lasciare conti orfani nei settlements */
+  function removeCrewMember(id) {
+    _state.crew = _state.crew.filter(function (p) { return p.id !== id; });
+    _state.expenses = _state.expenses.filter(function (e) { return e.paidBy !== id; });
+    _state.expenses.forEach(function (e) {
+      e.splitAmong = (e.splitAmong || []).filter(function (pid) { return pid !== id; });
+    });
+    _state.expenses = _state.expenses.filter(function (e) { return (e.splitAmong || []).length > 0; });
+    _state.oscars.forEach(function (o) { if (o.votes) delete o.votes[id]; });
+    return save();
   }
 
   function get() { return _state; }
@@ -336,6 +375,8 @@
     get:                  get,
     update:               update,
     reset:                reset,
+    setPrice:             setPrice,
+    removeCrewMember:     removeCrewMember,
     calculateSettlements: calculateSettlements,
     totalDrinks:          totalDrinks,
     getDrinkById:         getDrinkById,
