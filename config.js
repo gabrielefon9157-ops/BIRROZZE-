@@ -7,5 +7,7 @@
  */
 window.BIRROZZE_CONFIG = {
   supabaseUrl: "https://pkdqefzogmuvrewadden.supabase.co",
-  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHFlZnpvZ211dnJld2FkZGVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODEwNDQsImV4cCI6MjA5OTg1NzA0NH0.zYMeyTfsErPP1tSstu2zRy7MVmiy2EjN5kQmGO2wxEs"
+  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZHFlZnpvZ211dnJld2FkZGVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODEwNDQsImV4cCI6MjA5OTg1NzA0NH0.zYMeyTfsErPP1tSstu2zRy7MVmiy2EjN5kQmGO2wxEs",
+  /* Solo chi accede con questa email vede e scarica il registro email */
+  adminEmail: "gabriele.fon9157@gmail.com"
 };

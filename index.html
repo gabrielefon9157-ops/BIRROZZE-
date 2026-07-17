@@ -678,6 +678,33 @@
         <a href="perle.html"         class="nav-link" data-page="perle.html">Perle</a>
         <a href="oscar.html"         class="nav-link" data-page="oscar.html">Oscar</a>
         <a href="prossima.html"      class="nav-link" data-page="prossima.html">Tappa</a>
+            <!-- Widget avatar utente loggato -->
+      <div class="nav-user" id="navUser">
+        <button class="nav-avatar-btn" id="navAvatarBtn" aria-label="Profilo utente" aria-expanded="false" aria-haspopup="true">
+          <span id="navAvatarInitial">?</span>
+          <img id="navAvatarImg" alt="Foto profilo">
+        </button>
+        <div class="nav-user-dropdown" id="navDropdown" role="menu">
+          <div class="nav-dd-header">
+            <div class="nav-dd-avatar" id="navDdAvatar">
+              <span id="navDdInitial"></span>
+              <img id="navDdImg" alt="">
+            </div>
+            <div>
+              <div class="nav-dd-name" id="navDdName"></div>
+              <div class="nav-dd-email" id="navDdEmail"></div>
+            </div>
+          </div>
+          <button class="nav-dd-btn" id="navChangeAvatarBtn" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Cambia foto profilo
+          </button>
+          <input type="file" id="navAvatarFileInput" accept="image/*" style="display:none">
+          <button class="nav-dd-btn danger" id="navLogoutBtn" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Esci (Logout)
+          </button>
+        </div>
       </div>
     </div>
   </nav>

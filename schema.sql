@@ -30,8 +30,12 @@ CREATE TABLE IF NOT EXISTS public.crew (
     session_id TEXT REFERENCES public.sessions(id) ON DELETE CASCADE NOT NULL,
     name TEXT NOT NULL,
     is_active BOOLEAN DEFAULT true NOT NULL,
+    avatar_url TEXT, -- foto profilo (URL storage o data URL)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Aggiunge la colonna avatar ai database creati prima di questa versione
+ALTER TABLE public.crew ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
 -- 3. Consumazioni
 CREATE TABLE IF NOT EXISTS public.drinks_consumed (
@@ -175,7 +179,8 @@ CREATE POLICY "Accesso totale pubblico oscar_votes" ON public.oscar_votes FOR AL
 CREATE POLICY "Accesso totale pubblico proposals" ON public.proposals FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico proposal_votes" ON public.proposal_votes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico drinking_votes" ON public.drinking_votes FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Accesso totale pubblico emails" ON public.emails FOR ALL USING (true) WITH CHECK (true);
+-- EMAILS: solo INSERT dal frontend. Lettura/export solo dalla dashboard Supabase.
+CREATE POLICY "Solo inserimento emails" ON public.emails FOR INSERT WITH CHECK (true);
 
 -- Registrazione sicura delle tabelle al canale Realtime di Supabase (evita errori se già presenti)
 DO $$

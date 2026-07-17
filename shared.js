@@ -400,8 +400,17 @@
     location.href = "login.html";
   }
 
-  /* Scarica il registro email dal cloud come file locale chiamato "email" */
+  /* Vero solo per l'amministratore configurato in config.js */
+  function isAdmin() {
+    var a = getAuthProfile();
+    var adm = (window.BIRROZZE_CONFIG && window.BIRROZZE_CONFIG.adminEmail || "").toLowerCase().trim();
+    return !!(a && adm && String(a.email).toLowerCase() === adm);
+  }
+
+  /* Scarica il registro email dal cloud come file locale chiamato "email".
+     Riservato all'amministratore: gli altri membri non lo vedono. */
   async function downloadEmailsFile() {
+    if (!isAdmin()) { toast("Solo l'amministratore può scaricare il registro email."); return; }
     if (!sb) { toast("Non connesso al database."); return; }
     var res = await sb.from("emails").select("*").order("created_at", { ascending: true });
     if (res.error) { toast("Errore nel recupero del registro email."); return; }
@@ -420,6 +429,76 @@
     a.remove();
     URL.revokeObjectURL(a.href);
     toast("Registro email scaricato (" + lines.length + " indirizzi).");
+  }
+
+  /* ---- Foto profilo ---- */
+
+  /* Ritaglia al centro in un quadrato e comprime (per gli avatar) */
+  function compressSquare(file, size, q, callback) {
+    var reader = new FileReader();
+    reader.onload = function (evt) {
+      var img = new Image();
+      img.onload = function () {
+        var side = Math.min(img.width, img.height);
+        var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+        var canvas = document.createElement("canvas");
+        canvas.width = size; canvas.height = size;
+        canvas.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        callback(canvas.toDataURL("image/jpeg", q));
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function getMyAvatar() {
+    var myId = getActiveProfileId();
+    var av = null;
+    _state.crew.forEach(function (p) { if (p.id === myId && p.avatar) av = p.avatar; });
+    return av;
+  }
+
+  /* Imposta la foto profilo: upload sul bucket se connessi,
+     altrimenti data URL compresso salvato nello stato */
+  function setMyAvatar(file, cb) {
+    if (!file || !/^image\//.test(file.type)) { if (cb) cb(false); return; }
+    promptForProfile(function () {
+      var myId = getActiveProfileId();
+      var me = null;
+      _state.crew.forEach(function (p) { if (p.id === myId) me = p; });
+      if (!me) { if (cb) cb(false); return; }
+
+      compressSquare(file, 200, 0.72, async function (dataUrl) {
+        var oldUrl = me.avatar || "";
+        var finalUrl = dataUrl;
+
+        if (sb) {
+          try {
+            var blob = dataURLtoBlob(dataUrl);
+            // Nome file unico: niente policy UPDATE necessaria, niente cache stantia
+            var path = "avatars/" + myId + "_" + Date.now() + ".jpg";
+            var up = await sb.storage.from("birozze_photos")
+              .upload(path, blob, { contentType: "image/jpeg", cacheControl: "3600" });
+            if (!up.error) {
+              var pub = sb.storage.from("birozze_photos").getPublicUrl(path);
+              if (pub.data && pub.data.publicUrl) finalUrl = pub.data.publicUrl;
+              // Pulizia best-effort del vecchio avatar su storage
+              var marker = "/birozze_photos/";
+              var idx = oldUrl.indexOf(marker);
+              if (idx !== -1) {
+                sb.storage.from("birozze_photos").remove([oldUrl.slice(idx + marker.length)]);
+              }
+            }
+          } catch (e) {
+            console.warn("[Birrozze] Upload avatar fallito, uso il fallback locale:", e);
+          }
+        }
+
+        me.avatar = finalUrl;
+        var ok = save();
+        if (cb) cb(ok, finalUrl);
+      });
+    });
   }
 
   /* ---- Nome personalizzato del gruppo ---- */
@@ -487,7 +566,7 @@
     }
 
     var newId = "user_" + uid();
-    _state.crew.push({ id: newId, name: name, drinks: {}, is_active: true });
+    _state.crew.push({ id: newId, name: name, drinks: {}, is_active: true, avatar: null });
     setActiveProfileId(newId);
     save();
 
@@ -613,7 +692,7 @@
         drinksList.filter(function(d) { return d.crew_id === c.id; }).forEach(function(d) {
           pDrinks[d.drink_id] = d.quantity;
         });
-        return { id: c.id, name: c.name, drinks: pDrinks, is_active: c.is_active };
+        return { id: c.id, name: c.name, drinks: pDrinks, is_active: c.is_active, avatar: c.avatar_url || null };
       });
 
       // Expenses
@@ -681,7 +760,7 @@
       // Inserisci Crew
       for (var i = 0; i < _state.crew.length; i++) {
         var c = _state.crew[i];
-        await sb.from("crew").insert({ id: c.id, session_id: sessionId, name: c.name, is_active: c.is_active });
+        await sb.from("crew").insert({ id: c.id, session_id: sessionId, name: c.name, is_active: c.is_active, avatar_url: c.avatar || null });
         
         // Inserisci Drinks
         for (var did in c.drinks) {
@@ -793,9 +872,9 @@
         var nc = newCrew[j];
         var oc = oldCrew.find(function(c) { return c.id === nc.id; });
         if (!oc) {
-          await sb.from("crew").insert({ id: nc.id, session_id: sessionId, name: nc.name, is_active: nc.is_active });
-        } else if (oc.is_active !== nc.is_active || oc.name !== nc.name) {
-          await sb.from("crew").update({ name: nc.name, is_active: nc.is_active }).eq("id", nc.id).eq("session_id", sessionId);
+          await sb.from("crew").insert({ id: nc.id, session_id: sessionId, name: nc.name, is_active: nc.is_active, avatar_url: nc.avatar || null });
+        } else if (oc.is_active !== nc.is_active || oc.name !== nc.name || oc.avatar !== nc.avatar) {
+          await sb.from("crew").update({ name: nc.name, is_active: nc.is_active, avatar_url: nc.avatar || null }).eq("id", nc.id).eq("session_id", sessionId);
         }
 
         var oldDrinks = (oc && oc.drinks) || {};
@@ -1311,9 +1390,13 @@
 
   // Inietta widget navbar a caricamento completato
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectGroupWidget);
+    document.addEventListener("DOMContentLoaded", function() {
+      injectGroupWidget();
+      initNavbarUser();
+    });
   } else {
     injectGroupWidget();
+    initNavbarUser();
   }
 
   /* Rimuove un membro e tutti i suoi riferimenti (spese, voti)
@@ -1462,6 +1545,92 @@
     });
   }
 
+  /* ---- Navbar: inizializza il widget avatar + dropdown logout ---- */
+  function initNavbarUser() {
+    var prof = getAuthProfile();
+    if (!prof) return;
+
+    /* Setta avatar (testo iniziale o foto) su un contenitore generico */
+    function applyAvatar(initialEl, imgEl, name, avatarUrl) {
+      if (avatarUrl) {
+        imgEl.src = avatarUrl;
+        imgEl.style.display = "block";
+        if (initialEl) initialEl.style.display = "none";
+      } else {
+        if (initialEl) initialEl.textContent = (name || "?").charAt(0).toUpperCase();
+        imgEl.style.display = "none";
+      }
+    }
+
+    /* Pulsante avatar in navbar */
+    var btnInitial = document.getElementById("navAvatarInitial");
+    var btnImg     = document.getElementById("navAvatarImg");
+    if (btnInitial && btnImg) {
+      /* Usa prima l'avatar dalla crew locale, poi quello del profilo auth */
+      var myId = getActiveProfileId();
+      var avatarUrl = null;
+      if (myId) {
+        _state.crew.forEach(function (p) { if (p.id === myId && p.avatar) avatarUrl = p.avatar; });
+      }
+      if (!avatarUrl) avatarUrl = prof.avatarUrl || null;
+      applyAvatar(btnInitial, btnImg, prof.name, avatarUrl);
+    }
+
+    /* Dropdown header */
+    var ddInitial = document.getElementById("navDdInitial");
+    var ddImg     = document.getElementById("navDdImg");
+    var ddName    = document.getElementById("navDdName");
+    var ddEmail   = document.getElementById("navDdEmail");
+    if (ddName)  ddName.textContent  = prof.name  || "Utente";
+    if (ddEmail) ddEmail.textContent = prof.email || "";
+    if (ddInitial && ddImg) applyAvatar(ddInitial, ddImg, prof.name, prof.avatarUrl || null);
+
+    /* Toggle dropdown */
+    var avatarBtn = document.getElementById("navAvatarBtn");
+    var dropdown  = document.getElementById("navDropdown");
+    if (avatarBtn && dropdown) {
+      avatarBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = dropdown.classList.toggle("open");
+        avatarBtn.setAttribute("aria-expanded", String(open));
+      });
+      document.addEventListener("click", function () {
+        dropdown.classList.remove("open");
+        avatarBtn.setAttribute("aria-expanded", "false");
+      });
+      dropdown.addEventListener("click", function (e) { e.stopPropagation(); });
+    }
+
+    /* Cambio avatar dalla navbar */
+    var fileInput = document.getElementById("navAvatarFileInput");
+    var changeBtn = document.getElementById("navChangeAvatarBtn");
+    if (changeBtn && fileInput) {
+      changeBtn.addEventListener("click", function () { fileInput.click(); });
+      fileInput.addEventListener("change", function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        setMyAvatar(file, function (ok, url) {
+          if (ok && url) {
+            if (btnInitial && btnImg) applyAvatar(btnInitial, btnImg, prof.name, url);
+            if (ddInitial  && ddImg)  applyAvatar(ddInitial,  ddImg,  prof.name, url);
+            toast("Foto profilo aggiornata!");
+          } else {
+            toast("Errore nell\'upload foto. Riprova.");
+          }
+          if (dropdown) dropdown.classList.remove("open");
+        });
+      });
+    }
+
+    /* Logout */
+    var logoutBtn = document.getElementById("navLogoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", function () {
+        logout();
+      });
+    }
+  }
+
   /* ---- Compress image for localStorage ---- */
   function compressImageFile(file, callback) {
     var reader = new FileReader();
@@ -1517,13 +1686,18 @@
     toast:                toast,
     initReveal:           initReveal,
     markActiveNav:        markActiveNav,
+    initNavbarUser:       initNavbarUser,
     compressImageFile:    compressImageFile,
     getActiveProfileId:   getActiveProfileId,
     setActiveProfileId:   setActiveProfileId,
     promptForProfile:     promptForProfile,
+    /* Avatar */
+    setMyAvatar:          setMyAvatar,
+    getMyAvatar:          getMyAvatar,
     /* Autenticazione e gruppi */
     isConnected:          isConnected,
     getAuthProfile:       getAuthProfile,
+    _setAuthProfile:      setAuthProfile,
     signInWithEmail:      signInWithEmail,
     signInWithPassword:   signInWithPassword,
     signUpWithPassword:   signUpWithPassword,
