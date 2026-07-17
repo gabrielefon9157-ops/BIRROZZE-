@@ -153,32 +153,110 @@ CREATE POLICY "Accesso totale pubblico proposals" ON public.proposals FOR ALL US
 CREATE POLICY "Accesso totale pubblico proposal_votes" ON public.proposal_votes FOR ALL USING (true) WITH CHECK (true);
 
 -- Registrazione sicura delle tabelle al canale Realtime di Supabase (evita errori se già presenti)
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.sessions;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.sessions;
+DO $$
+DECLARE
+    pub_exists BOOLEAN;
+BEGIN
+    SELECT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') INTO pub_exists;
+    IF pub_exists THEN
+        -- sessions
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'sessions'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.sessions;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.crew;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.crew;
+        -- crew
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'crew'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.crew;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.drinks_consumed;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.drinks_consumed;
+        -- drinks_consumed
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'drinks_consumed'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.drinks_consumed;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.expenses;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.expenses;
+        -- expenses
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'expenses'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.expenses;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.photos;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.photos;
+        -- photos
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'photos'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.photos;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.perle;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.perle;
+        -- perle
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'perle'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.perle;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.oscars;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.oscars;
+        -- oscars
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'oscars'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.oscars;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.oscar_votes;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.oscar_votes;
+        -- oscar_votes
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'oscar_votes'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.oscar_votes;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.proposals;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;
+        -- proposals
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'proposals'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;
+        END IF;
 
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.proposal_votes;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.proposal_votes;
+        -- proposal_votes
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr 
+            JOIN pg_class c ON pr.prrelid = c.oid 
+            JOIN pg_publication p ON pr.prpubid = p.oid 
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'proposal_votes'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.proposal_votes;
+        END IF;
+    END IF;
+END $$;
