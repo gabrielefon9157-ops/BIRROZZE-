@@ -126,6 +126,7 @@ input, select, textarea { font-family: inherit; }
   height: 64px;
   display: flex;
   align-items: center;
+  overflow: visible;
 }
 
 .topnav-inner {
@@ -137,6 +138,7 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
+  overflow: visible;
 }
 
 .nav-brand {
