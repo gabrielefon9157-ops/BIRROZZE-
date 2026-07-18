@@ -269,17 +269,25 @@
       var totalVotes = 0;
       var catCount   = state.oscars.length;
 
+      // Nel nuovo modello o.votes è { votante: candidato }: ogni chiave è UN voto.
+      // (Sommare i valori concatenava gli id come stringhe: da qui il "codice"
+      // che compariva in "Voti totali".)
       state.oscars.forEach(function (o) {
-        for (var pid in o.votes) totalVotes += o.votes[pid];
+        for (var pid in o.votes) totalVotes++;
       });
 
-      // Find most decorated person
+      // Find most decorated person: vince chi ha più preferenze in ogni categoria
       var tally = {};
       state.crew.forEach(function (p) { tally[p.id] = 0; });
       state.oscars.forEach(function (o) {
+        var counts = {};
+        for (var voterId in o.votes) {
+          var cand = o.votes[voterId];
+          counts[cand] = (counts[cand] || 0) + 1;
+        }
         var maxV = 0, leadId = null;
-        for (var pid in o.votes) {
-          if (o.votes[pid] > maxV) { maxV = o.votes[pid]; leadId = pid; }
+        for (var candId in counts) {
+          if (counts[candId] > maxV) { maxV = counts[candId]; leadId = candId; }
         }
         if (leadId) tally[leadId] = (tally[leadId] || 0) + 1;
       });

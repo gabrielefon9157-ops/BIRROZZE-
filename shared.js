@@ -395,6 +395,10 @@
 
   function logout() {
     try { localStorage.removeItem(AUTH_KEY); } catch (e) {}
+    // Il logout chiude anche la sessione di gruppo e ne svuota la cache:
+    // l'utente successivo su questo dispositivo non deve vedere i dati altrui
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    setActiveGroupId(null);
     setActiveProfileId(null);
     if (sb && sb.auth) { try { sb.auth.signOut(); } catch (e) {} }
     location.href = "login.html";
@@ -1210,7 +1214,6 @@
                 '<button class="btn btn-primary" id="copyInviteLink" style="flex:1;font-size:13px;padding:10px;">Copia link invito</button>' +
                 '<button class="btn btn-outline" id="disconnectGroup" style="flex:1;font-size:13px;padding:10px;color:var(--copper);border-color:rgba(232,85,47,.3);">Disconnetti</button>' +
               '</div>' +
-              '<button class="btn btn-ghost" id="downloadEmailsBtn" style="width:100%;margin-top:8px;font-size:12.5px;padding:9px;">Scarica registro email (file &laquo;email&raquo;)</button>' +
             '</div>' +
             '<div id="groupInactiveInfo">' +
               '<p style="font-size:13.5px;color:var(--text-soft);line-height:1.5;margin-bottom:12px;">Crea un gruppo condiviso per registrare consumazioni, perle e spese insieme ai tuoi amici in tempo reale.</p>' +
@@ -1276,10 +1279,6 @@
       }
     });
 
-    // Scarica registro email
-    document.getElementById("downloadEmailsBtn").addEventListener("click", function() {
-      downloadEmailsFile();
-    });
 
     // Logout profilo
     document.getElementById("logoutBtn").addEventListener("click", function() {
@@ -1360,6 +1359,12 @@
           realtimeChannel.unsubscribe();
           realtimeChannel = null;
         }
+        // Svuota la cache locale del gruppo abbandonato: senza questo
+        // foto, perle e membri del vecchio gruppo restano visibili
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        setActiveProfileId(null);
+        _state = deepClone(DEFAULT_STATE);
+        _lastSyncedState = deepClone(DEFAULT_STATE);
         updatePill();
         closeModal();
         toast("Scollegato. Modalità locale ripristinata.");
