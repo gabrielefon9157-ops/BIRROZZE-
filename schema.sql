@@ -128,7 +128,21 @@ CREATE TABLE IF NOT EXISTS public.drinking_votes (
 );
 
 
--- 12. Registro Email (login con Google o Email)
+-- 12. Passaggi in auto (Organizza Passaggi)
+CREATE TABLE IF NOT EXISTS public.rides (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    session_id TEXT REFERENCES public.sessions(id) ON DELETE CASCADE NOT NULL,
+    driver_id TEXT REFERENCES public.crew(id) ON DELETE CASCADE NOT NULL,
+    seats INTEGER DEFAULT 4 NOT NULL,             -- posti passeggero disponibili
+    direction TEXT DEFAULT 'entrambi' NOT NULL,   -- 'andata' | 'ritorno' | 'entrambi'
+    note TEXT DEFAULT '' NOT NULL,                -- es. "parto alle 23:30 dal residence"
+    passengers_a TEXT[] DEFAULT '{}' NOT NULL,    -- crew_id prenotati per l'andata
+    passengers_r TEXT[] DEFAULT '{}' NOT NULL,    -- crew_id prenotati per il ritorno
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT one_ride_per_driver UNIQUE (session_id, driver_id)
+);
+
+-- 13. Registro Email (login con Google o Email)
 CREATE TABLE IF NOT EXISTS public.emails (
     email TEXT PRIMARY KEY,
     name TEXT,
@@ -151,6 +165,7 @@ ALTER TABLE public.oscar_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposal_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.drinking_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.emails ENABLE ROW LEVEL SECURITY;
 
 -- Rimozione preventiva delle policy se già esistenti per evitare errori di duplicazione
@@ -165,6 +180,7 @@ DROP POLICY IF EXISTS "Accesso totale pubblico oscar_votes" ON public.oscar_vote
 DROP POLICY IF EXISTS "Accesso totale pubblico proposals" ON public.proposals;
 DROP POLICY IF EXISTS "Accesso totale pubblico proposal_votes" ON public.proposal_votes;
 DROP POLICY IF EXISTS "Accesso totale pubblico drinking_votes" ON public.drinking_votes;
+DROP POLICY IF EXISTS "Accesso totale pubblico rides" ON public.rides;
 DROP POLICY IF EXISTS "Accesso totale pubblico emails" ON public.emails;
 
 -- Consenti accesso in lettura/scrittura anonimo pubblico per la vacanza studio
@@ -179,6 +195,7 @@ CREATE POLICY "Accesso totale pubblico oscar_votes" ON public.oscar_votes FOR AL
 CREATE POLICY "Accesso totale pubblico proposals" ON public.proposals FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico proposal_votes" ON public.proposal_votes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Accesso totale pubblico drinking_votes" ON public.drinking_votes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Accesso totale pubblico rides" ON public.rides FOR ALL USING (true) WITH CHECK (true);
 -- EMAILS: solo INSERT dal frontend. Lettura/export solo dalla dashboard Supabase.
 CREATE POLICY "Solo inserimento emails" ON public.emails FOR INSERT WITH CHECK (true);
 
@@ -297,6 +314,16 @@ BEGIN
             WHERE p.pubname = 'supabase_realtime' AND c.relname = 'drinking_votes'
         ) THEN
             ALTER PUBLICATION supabase_realtime ADD TABLE public.drinking_votes;
+        END IF;
+
+        -- rides
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_rel pr
+            JOIN pg_class c ON pr.prrelid = c.oid
+            JOIN pg_publication p ON pr.prpubid = p.oid
+            WHERE p.pubname = 'supabase_realtime' AND c.relname = 'rides'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.rides;
         END IF;
 
         -- emails

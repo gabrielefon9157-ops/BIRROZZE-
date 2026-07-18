@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizza Passaggi — Birrozze</title>
+  <meta name="description" content="Offri posti in auto, prenota il tuo passaggio e scopri chi è ancora a piedi per la serata.">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { background: var(--cream); }
+
+    /* ---- LAYOUT ---- */
+    .rides-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+      align-items: start;
+    }
+    @media (min-width: 820px) {
+      .rides-layout { grid-template-columns: 1fr 320px; }
+    }
+
+    /* ---- SUMMARY BAND ---- */
+    .rides-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
+    }
+    .summary-chip {
+      background: var(--foam);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 12px;
+      text-align: center;
+      box-shadow: var(--shadow-xs);
+    }
+    .summary-num {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--amber-dark);
+      line-height: 1.1;
+    }
+    .summary-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-soft);
+      margin-top: 4px;
+    }
+
+    /* ---- PANNELLO "GUIDI TU?" ---- */
+    .offer-panel {
+      background: var(--foam);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--space-xl);
+    }
+    .offer-title {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--espresso);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .offer-sub { font-size: 13px; color: var(--text-soft); margin-bottom: var(--space-md); }
+
+    .offer-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      align-items: flex-end;
+    }
+    .offer-field { display: flex; flex-direction: column; gap: 6px; }
+    .offer-field label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-soft);
+    }
+
+    /* Stepper posti */
+    .seat-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      background: var(--cream);
+      overflow: hidden;
+    }
+    .seat-stepper button {
+      border: none;
+      background: transparent;
+      width: 36px;
+      height: 38px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--amber-dark);
+      cursor: pointer;
+    }
+    .seat-stepper button:hover { background: var(--amber-pale); }
+    .seat-stepper .seat-count {
+      min-width: 34px;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--espresso);
+    }
+
+    /* Segmented control direzione */
+    .dir-seg { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+    .dir-btn {
+      padding: 9px 14px;
+      border-radius: 99px;
+      border: 2px solid var(--border);
+      background: var(--foam);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-body);
+      cursor: pointer;
+      transition: border-color .18s, background .18s;
+    }
+    .dir-btn:hover { border-color: var(--amber-dark); }
+    .dir-btn.active {
+      border-color: var(--amber);
+      background: var(--amber-pale);
+      color: var(--espresso);
+    }
+
+    .offer-note-input { min-width: 220px; flex: 1; }
+
+    /* ---- CARD PASSAGGIO ---- */
+    .rides-list { display: flex; flex-direction: column; gap: var(--space-md); }
+
+    .ride-card {
+      background: var(--foam);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-xs);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ride-card:hover { border-color: rgba(227,163,32,.4); box-shadow: var(--shadow-sm); }
+    .ride-card.mine { border-color: var(--amber); background: var(--amber-pale); }
+
+    .ride-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: var(--space-sm);
+    }
+    .ride-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--butter);
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 800; font-size: 17px;
+      color: var(--amber-dark);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .ride-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .ride-driver { font-weight: 700; font-size: 16px; color: var(--espresso); }
+    .ride-note { font-size: 12.5px; color: var(--text-soft); font-style: italic; }
+
+    .dir-badge {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 5px 10px;
+      border-radius: 99px;
+      background: var(--sky);
+      color: var(--espresso);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* Tratte (andata / ritorno) */
+    .ride-leg {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      border-radius: var(--r);
+      background: var(--cream);
+      border: 1px dashed var(--border);
+      margin-top: 8px;
+    }
+    .ride-card.mine .ride-leg { background: var(--foam); }
+    .leg-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-soft);
+      min-width: 74px;
+    }
+    .leg-seats { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; flex: 1; }
+    .seat-dot {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: 2px dashed var(--border);
+      background: transparent;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800;
+      color: var(--foam);
+    }
+    .seat-dot.full {
+      border-style: solid;
+      border-color: var(--amber);
+      background: var(--amber);
+    }
+    .seat-dot.full.me-dot { border-color: var(--copper); background: var(--copper); }
+    .leg-names { font-size: 12px; color: var(--text-soft); width: 100%; }
+    .leg-names b { color: var(--espresso); }
+    .leg-action { flex-shrink: 0; }
+    .leg-full-tag {
+      font-size: 11.5px; font-weight: 700;
+      color: var(--copper);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .leg-driver-tag { font-size: 12px; color: var(--text-mute); font-weight: 600; }
+
+    .ride-manage {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: var(--space-md);
+      padding-top: var(--space-sm);
+      border-top: 1px dashed var(--border);
+    }
+
+    /* ---- PANNELLO "A PIEDI" (sticky) ---- */
+    .walking-panel {
+      background: var(--mint);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 80px;
+    }
+    .walking-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--amber-dark);
+      margin-bottom: var(--space-sm);
+      text-align: center;
+    }
+    .walking-leg { margin-top: var(--space-md); }
+    .walking-leg-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--espresso);
+      margin-bottom: 6px;
+    }
+    .walking-names { display: flex; flex-wrap: wrap; gap: 6px; }
+    .walk-chip {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-body);
+      background: var(--foam);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 5px 12px;
+    }
+    .walking-ok {
+      font-size: 13px;
+      color: var(--espresso);
+      background: var(--foam);
+      border-radius: var(--r);
+      padding: 8px 12px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--text-mute);
+    }
+    .empty-state p { margin-top: 12px; font-size: 14px; }
+
+    .reset-rides-row { text-align: center; margin-top: var(--space-xl); }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <nav class="topnav" role="navigation" aria-label="Navigazione principale">
+    <div class="topnav-inner">
+      <a href="index.html" class="nav-brand">Bir<span>rozze</span></a>
+      <div class="nav-links">
+        <a href="consumazioni.html" class="nav-link" data-page="consumazioni.html">Bevute</a>
+        <a href="classifica.html"    class="nav-link" data-page="classifica.html">Classifica</a>
+        <a href="spese.html"         class="nav-link" data-page="spese.html">Spese</a>
+        <a href="galleria.html"      class="nav-link" data-page="galleria.html">Galleria</a>
+        <a href="perle.html"         class="nav-link" data-page="perle.html">Perle</a>
+        <a href="oscar.html"         class="nav-link" data-page="oscar.html">Oscar</a>
+        <a href="passaggi.html"      class="nav-link" data-page="passaggi.html">Passaggi</a>
+      </div>
+
+      <!-- Widget avatar utente loggato -->
+      <div class="nav-user" id="navUser">
+        <button class="nav-avatar-btn" id="navAvatarBtn" aria-label="Profilo utente" aria-expanded="false" aria-haspopup="true">
+          <span id="navAvatarInitial">?</span>
+          <img id="navAvatarImg" alt="Foto profilo">
+        </button>
+        <div class="nav-user-dropdown" id="navDropdown" role="menu">
+          <div class="nav-dd-header">
+            <div class="nav-dd-avatar" id="navDdAvatar">
+              <span id="navDdInitial"></span>
+              <img id="navDdImg" alt="">
+            </div>
+            <div>
+              <div class="nav-dd-name" id="navDdName"></div>
+              <div class="nav-dd-email" id="navDdEmail"></div>
+            </div>
+          </div>
+          <button class="nav-dd-btn" id="navChangeAvatarBtn" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Cambia foto profilo
+          </button>
+          <input type="file" id="navAvatarFileInput" accept="image/*" style="display:none">
+          <button class="nav-dd-btn danger" id="navLogoutBtn" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Esci (Logout)
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="page-hero">
+    <span class="kicker">Chi guida stasera?</span>
+    <h1>Organizza Passaggi</h1>
+    <p>Offri i posti liberi della tua auto, prenota il tuo passaggio per andata e ritorno e guarda al volo chi è ancora a piedi.</p>
+  </header>
+
+  <main class="page-wrap">
+
+    <!-- SUMMARY -->
+    <div class="rides-summary fade-up" aria-label="Riepilogo passaggi">
+      <div class="summary-chip">
+        <div class="summary-num" id="statCars">0</div>
+        <div class="summary-label">Auto disponibili</div>
+      </div>
+      <div class="summary-chip">
+        <div class="summary-num" id="statSeatsA">0</div>
+        <div class="summary-label">Posti liberi andata</div>
+      </div>
+      <div class="summary-chip">
+        <div class="summary-num" id="statSeatsR">0</div>
+        <div class="summary-label">Posti liberi ritorno</div>
+      </div>
+    </div>
+
+    <div class="rides-layout">
+
+      <!-- SINISTRA: offerta + lista auto -->
+      <div>
+        <div class="offer-panel fade-up" id="offerPanel">
+          <!-- Popolato da JS: form offerta o gestione della propria auto -->
+        </div>
+
+        <h2 style="font-family:var(--font-display);font-size:20px;color:var(--espresso);margin-bottom:var(--space-md);">Le auto di stasera</h2>
+        <div class="rides-list" id="ridesList"></div>
+
+        <div class="reset-rides-row">
+          <button class="btn btn-ghost" id="resetRidesBtn" style="font-size:12.5px;color:var(--text-mute);">Nuova serata: azzera i passaggi</button>
+        </div>
+      </div>
+
+      <!-- DESTRA: chi è a piedi -->
+      <div class="walking-panel fade-up" role="region" aria-label="Chi è ancora a piedi">
+        <div class="walking-title">🚶 Ancora a piedi</div>
+        <div id="walkingBody"></div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="page-footer">
+    <div class="page-wrap">Fatto con cura per la vacanza studio &middot; <strong>Birrozze v7.0</strong></div>
+  </footer>
+
+  <div class="toast-container" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="shared.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var BS = window.BirrozzeState;
+    BS.load();
+    BS.markActiveNav();
+    BS.initReveal();
+
+    /* L'identità arriva dall'account: niente selettori manuali */
+    BS.promptForProfile();
+    var me = BS.getActiveProfileId();
+
+    var DIR_LABEL = { entrambi: "Andata + Ritorno", andata: "Solo andata", ritorno: "Solo ritorno" };
+    var LEG_LABEL = { andata: "→ Andata", ritorno: "← Ritorno" };
+
+    /* Direzione scelta nel form di offerta (prima di confermare) */
+    var draftDirection = "entrambi";
+    var draftSeats = 4;
+
+    /* ---- Helpers modello ---- */
+    function rides() {
+      var s = BS.get();
+      if (!s.rides) s.rides = [];
+      return s.rides;
+    }
+    function coversLeg(r, leg) { return r.direction === "entrambi" || r.direction === leg; }
+    function legArr(r, leg) {
+      if (leg === "andata") { if (!r.passengersA) r.passengersA = []; return r.passengersA; }
+      if (!r.passengersR) r.passengersR = [];
+      return r.passengersR;
+    }
+    function getPerson(pid) {
+      var found = null;
+      BS.get().crew.forEach(function (p) { if (p.id === pid) found = p; });
+      return found;
+    }
+    function getName(pid) {
+      var p = getPerson(pid);
+      return p ? p.name : "??";
+    }
+    function myRide() {
+      var mine = null;
+      rides().forEach(function (r) { if (r.driverId === me) mine = r; });
+      return mine;
+    }
+    /* Una persona è coperta su una tratta se guida un'auto che la copre
+       o è prenotata su un'auto che la copre */
+    function isCovered(pid, leg) {
+      return rides().some(function (r) {
+        return coversLeg(r, leg) && (r.driverId === pid || legArr(r, leg).indexOf(pid) > -1);
+      });
+    }
+    function freeSeats(r, leg) { return Math.max(0, r.seats - legArr(r, leg).length); }
+
+    /* ---- Render: riepilogo ---- */
+    function renderSummary() {
+      var list = rides();
+      var seatsA = 0, seatsR = 0;
+      list.forEach(function (r) {
+        if (coversLeg(r, "andata"))  seatsA += freeSeats(r, "andata");
+        if (coversLeg(r, "ritorno")) seatsR += freeSeats(r, "ritorno");
+      });
+      document.getElementById("statCars").textContent = list.length;
+      document.getElementById("statSeatsA").textContent = seatsA;
+      document.getElementById("statSeatsR").textContent = seatsR;
+    }
+
+    /* ---- Render: pannello offerta / gestione propria auto ---- */
+    function renderOfferPanel() {
+      var panel = document.getElementById("offerPanel");
+      var mine = myRide();
+
+      if (!mine) {
+        panel.innerHTML =
+          '<div class="offer-title">🚗 Stasera guidi tu?</div>' +
+          '<div class="offer-sub">Offri i posti liberi della tua auto: gli altri potranno prenotarsi da soli.</div>' +
+          '<div class="offer-grid">' +
+            '<div class="offer-field">' +
+              '<label>Posti passeggero</label>' +
+              '<div class="seat-stepper">' +
+                '<button type="button" id="seatMinus" aria-label="Meno posti">−</button>' +
+                '<span class="seat-count" id="seatCount">' + draftSeats + '</span>' +
+                '<button type="button" id="seatPlus" aria-label="Più posti">+</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="offer-field">' +
+              '<label>Tratta</label>' +
+              '<div class="dir-seg" id="dirSeg">' +
+                ['entrambi', 'andata', 'ritorno'].map(function (d) {
+                  return '<button type="button" class="dir-btn' + (draftDirection === d ? ' active' : '') + '" data-dir="' + d + '">' + DIR_LABEL[d] + '</button>';
+                }).join('') +
+              '</div>' +
+            '</div>' +
+            '<div class="offer-field offer-note-input">' +
+              '<label>Nota (facoltativa)</label>' +
+              '<input type="text" id="offerNote" maxlength="60" placeholder="Es. parto alle 23:30 dal residence">' +
+            '</div>' +
+            '<button class="btn btn-primary" id="offerBtn" style="padding:11px 20px;">Offro il passaggio</button>' +
+          '</div>';
+
+        document.getElementById("seatMinus").addEventListener("click", function () {
+          draftSeats = Math.max(1, draftSeats - 1);
+          document.getElementById("seatCount").textContent = draftSeats;
+        });
+        document.getElementById("seatPlus").addEventListener("click", function () {
+          draftSeats = Math.min(8, draftSeats + 1);
+          document.getElementById("seatCount").textContent = draftSeats;
+        });
+        document.getElementById("dirSeg").addEventListener("click", function (e) {
+          var btn = e.target.closest(".dir-btn");
+          if (!btn) return;
+          draftDirection = btn.getAttribute("data-dir");
+          this.querySelectorAll(".dir-btn").forEach(function (b) {
+            b.classList.toggle("active", b.getAttribute("data-dir") === draftDirection);
+          });
+        });
+        document.getElementById("offerBtn").addEventListener("click", function () {
+          if (!me) {
+            BS.promptForProfile();
+            me = BS.getActiveProfileId();
+            if (!me) { BS.toast("Profilo non disponibile: ricarica la pagina."); return; }
+          }
+          var note = document.getElementById("offerNote").value.trim();
+          rides().push({
+            id: BS.uid(),
+            driverId: me,
+            seats: draftSeats,
+            direction: draftDirection,
+            note: note,
+            passengersA: [],
+            passengersR: []
+          });
+          BS.save();
+          renderAll();
+          BS.toast("Passaggio offerto: " + DIR_LABEL[draftDirection].toLowerCase() + ", " + draftSeats + " posti 🚗");
+        });
+        return;
+      }
+
+      /* Gestione della propria auto già offerta */
+      var bookedMax = Math.max(
+        coversLeg(mine, "andata")  ? legArr(mine, "andata").length  : 0,
+        coversLeg(mine, "ritorno") ? legArr(mine, "ritorno").length : 0
+      );
+      panel.innerHTML =
+        '<div class="offer-title">🔑 La tua auto è in lista</div>' +
+        '<div class="offer-sub">Puoi cambiare posti, tratta o nota: i prenotati vedranno tutto in tempo reale.</div>' +
+        '<div class="offer-grid">' +
+          '<div class="offer-field">' +
+            '<label>Posti passeggero</label>' +
+            '<div class="seat-stepper">' +
+              '<button type="button" id="mySeatMinus" aria-label="Meno posti">−</button>' +
+              '<span class="seat-count">' + mine.seats + '</span>' +
+              '<button type="button" id="mySeatPlus" aria-label="Più posti">+</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="offer-field">' +
+            '<label>Tratta</label>' +
+            '<div class="dir-seg" id="myDirSeg">' +
+              ['entrambi', 'andata', 'ritorno'].map(function (d) {
+                return '<button type="button" class="dir-btn' + (mine.direction === d ? ' active' : '') + '" data-dir="' + d + '">' + DIR_LABEL[d] + '</button>';
+              }).join('') +
+            '</div>' +
+          '</div>' +
+          '<div class="offer-field offer-note-input">' +
+            '<label>Nota</label>' +
+            '<input type="text" id="myNote" maxlength="60" value="' + BS.esc(mine.note || "") + '" placeholder="Es. parto alle 23:30 dal residence">' +
+          '</div>' +
+          '<button class="btn btn-outline" id="withdrawBtn" style="color:var(--copper);border-color:rgba(232,85,47,.3);">Ritira l\'offerta</button>' +
+        '</div>';
+
+      document.getElementById("mySeatMinus").addEventListener("click", function () {
+        if (mine.seats - 1 < bookedMax) {
+          BS.toast("Ci sono già " + bookedMax + " prenotati: non puoi scendere sotto.");
+          return;
+        }
+        if (mine.seats <= 1) return;
+        mine.seats -= 1;
+        BS.save();
+        renderAll();
+      });
+      document.getElementById("mySeatPlus").addEventListener("click", function () {
+        if (mine.seats >= 8) return;
+        mine.seats += 1;
+        BS.save();
+        renderAll();
+      });
+      document.getElementById("myDirSeg").addEventListener("click", function (e) {
+        var btn = e.target.closest(".dir-btn");
+        if (!btn) return;
+        var newDir = btn.getAttribute("data-dir");
+        if (newDir === mine.direction) return;
+        // I passeggeri della tratta che sparisce perdono il posto: chiedi conferma
+        var losing = [];
+        if (newDir === "andata"  && legArr(mine, "ritorno").length > 0) losing = legArr(mine, "ritorno");
+        if (newDir === "ritorno" && legArr(mine, "andata").length  > 0) losing = legArr(mine, "andata");
+        if (losing.length > 0) {
+          var names = losing.map(getName).join(", ");
+          if (!confirm("Cambiando tratta, " + names + " perderanno il posto su questa auto. Continuare?")) return;
+        }
+        if (newDir === "andata")  mine.passengersR = [];
+        if (newDir === "ritorno") mine.passengersA = [];
+        mine.direction = newDir;
+        BS.save();
+        renderAll();
+        BS.toast("Tratta aggiornata: " + DIR_LABEL[newDir]);
+      });
+      document.getElementById("myNote").addEventListener("change", function () {
+        mine.note = this.value.trim();
+        BS.save();
+        BS.toast("Nota aggiornata.");
+      });
+      document.getElementById("withdrawBtn").addEventListener("click", function () {
+        var booked = legArr(mine, "andata").length + legArr(mine, "ritorno").length;
+        var msg = booked > 0
+          ? "Ritirare l'offerta? " + booked + " prenotazioni verranno annullate e i passeggeri torneranno a piedi."
+          : "Ritirare l'offerta di passaggio?";
+        if (!confirm(msg)) return;
+        var s = BS.get();
+        s.rides = s.rides.filter(function (r) { return r.id !== mine.id; });
+        BS.save();
+        renderAll();
+        BS.toast("Offerta ritirata.");
+      });
+    }
+
+    /* ---- Render: lista auto ---- */
+    function renderRides() {
+      var list = rides();
+      var el = document.getElementById("ridesList");
+
+      if (list.length === 0) {
+        el.innerHTML =
+          '<div class="empty-state">' +
+            '<div style="font-size:52px;">🚗</div>' +
+            '<p>Nessuna auto in lista per stasera.<br>Sii il primo a offrire un passaggio!</p>' +
+          '</div>';
+        document.getElementById("resetRidesBtn").style.display = "none";
+        return;
+      }
+      document.getElementById("resetRidesBtn").style.display = "";
+
+      el.innerHTML = list.map(function (r) {
+        var driver = getPerson(r.driverId);
+        var driverName = driver ? driver.name : "??";
+        var isMine = r.driverId === me;
+        var avatarHtml = (driver && driver.avatar)
+          ? '<img src="' + BS.esc(driver.avatar) + '" alt="">'
+          : BS.esc(driverName.charAt(0).toUpperCase());
+
+        var legsHtml = ["andata", "ritorno"].filter(function (leg) {
+          return coversLeg(r, leg);
+        }).map(function (leg) {
+          var arr = legArr(r, leg);
+          var free = freeSeats(r, leg);
+          var booked = arr.indexOf(me) > -1;
+
+          // Pallini posti: pieni (iniziale) + vuoti
+          var dots = arr.map(function (pid) {
+            var cls = "seat-dot full" + (pid === me ? " me-dot" : "");
+            return '<span class="' + cls + '" title="' + BS.esc(getName(pid)) + '">' + BS.esc(getName(pid).charAt(0).toUpperCase()) + '</span>';
+          }).join('');
+          for (var k = 0; k < free; k++) dots += '<span class="seat-dot" aria-hidden="true"></span>';
+
+          var names = arr.length > 0
+            ? '<div class="leg-names">A bordo: <b>' + BS.esc(arr.map(getName).join(", ")) + '</b></div>'
+            : '<div class="leg-names">Ancora nessun prenotato.</div>';
+
+          var action;
+          if (isMine) {
+            action = '<span class="leg-driver-tag">Guidi tu</span>';
+          } else if (booked) {
+            action = '<button class="btn btn-ghost leg-btn" data-ride="' + r.id + '" data-leg="' + leg + '" data-op="unbook" style="font-size:12px;padding:6px 12px;">Scendi</button>';
+          } else if (free === 0) {
+            action = '<span class="leg-full-tag">Completo</span>';
+          } else {
+            action = '<button class="btn btn-primary leg-btn" data-ride="' + r.id + '" data-leg="' + leg + '" data-op="book" style="font-size:12px;padding:6px 14px;">Sali a bordo</button>';
+          }
+
+          return '<div class="ride-leg">' +
+            '<span class="leg-label">' + LEG_LABEL[leg] + '</span>' +
+            '<span class="leg-seats">' + dots + '</span>' +
+            '<span class="leg-action">' + action + '</span>' +
+            names +
+          '</div>';
+        }).join('');
+
+        return '<div class="ride-card' + (isMine ? ' mine' : '') + '">' +
+          '<div class="ride-head">' +
+            '<div class="ride-avatar">' + avatarHtml + '</div>' +
+            '<div style="flex:1;">' +
+              '<div class="ride-driver">' + BS.esc(driverName) + (isMine ? ' <span style="color:var(--amber-dark);font-size:12px;">(tu)</span>' : '') + '</div>' +
+              (r.note ? '<div class="ride-note">' + BS.esc(r.note) + '</div>' : '') +
+            '</div>' +
+            '<span class="dir-badge">' + DIR_LABEL[r.direction] + '</span>' +
+          '</div>' +
+          legsHtml +
+        '</div>';
+      }).join('');
+    }
+
+    /* ---- Render: pannello "a piedi" ---- */
+    function renderWalking() {
+      var state = BS.get();
+      var body = document.getElementById("walkingBody");
+      var activeCrew = state.crew.filter(function (p) { return p.is_active !== false; });
+
+      if (activeCrew.length === 0) {
+        body.innerHTML = '<div class="walking-ok">Nessun membro nel gruppo per ora.</div>';
+        return;
+      }
+
+      var html = ["andata", "ritorno"].map(function (leg) {
+        var walkers = activeCrew.filter(function (p) { return !isCovered(p.id, leg); });
+        var inner = walkers.length === 0
+          ? '<div class="walking-ok">Tutti coperti! 🎉</div>'
+          : '<div class="walking-names">' + walkers.map(function (p) {
+              return '<span class="walk-chip">' + BS.esc(p.name) + (p.id === me ? ' (tu)' : '') + '</span>';
+            }).join('') + '</div>';
+        return '<div class="walking-leg">' +
+          '<div class="walking-leg-label">' + LEG_LABEL[leg] + ' — ' + walkers.length + ' a piedi</div>' +
+          inner +
+        '</div>';
+      }).join('');
+
+      body.innerHTML = html;
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderOfferPanel();
+      renderRides();
+      renderWalking();
+    }
+
+    /* ---- Prenotazioni ---- */
+    document.getElementById("ridesList").addEventListener("click", function (e) {
+      var btn = e.target.closest(".leg-btn");
+      if (!btn) return;
+      var rideId = btn.getAttribute("data-ride");
+      var leg    = btn.getAttribute("data-leg");
+      var op     = btn.getAttribute("data-op");
+
+      if (!me) {
+        BS.promptForProfile();
+        me = BS.getActiveProfileId();
+        if (!me) { BS.toast("Profilo non disponibile: ricarica la pagina."); return; }
+      }
+
+      var target = null;
+      rides().forEach(function (r) { if (r.id === rideId) target = r; });
+      if (!target) return;
+
+      if (op === "unbook") {
+        var arr = legArr(target, leg);
+        var idx = arr.indexOf(me);
+        if (idx > -1) arr.splice(idx, 1);
+        BS.save();
+        renderAll();
+        BS.toast("Sei sceso dall'auto di " + getName(target.driverId) + " (" + leg + ").");
+        return;
+      }
+
+      // op === "book"
+      if (freeSeats(target, leg) === 0) { BS.toast("Auto al completo per questa tratta."); return; }
+      // Un solo posto per tratta: scendi automaticamente dalle altre auto
+      var switched = false;
+      rides().forEach(function (r) {
+        if (r.id === rideId || !coversLeg(r, leg)) return;
+        var a = legArr(r, leg);
+        var i = a.indexOf(me);
+        if (i > -1) { a.splice(i, 1); switched = true; }
+      });
+      legArr(target, leg).push(me);
+      BS.save();
+      renderAll();
+      BS.toast((switched ? "Cambio auto! " : "") + "Posto prenotato con " + getName(target.driverId) + " (" + leg + ") 🚗");
+    });
+
+    /* ---- Azzera i passaggi della serata ---- */
+    document.getElementById("resetRidesBtn").addEventListener("click", function () {
+      if (!confirm("Azzerare tutte le auto e le prenotazioni di stasera? (Utile a inizio di una nuova serata)")) return;
+      var s = BS.get();
+      s.rides = [];
+      BS.save();
+      renderAll();
+      BS.toast("Passaggi azzerati: si riparte!");
+    });
+
+    /* ---- Init ---- */
+    renderAll();
+
+  })();
+  </script>
+</body>
+</html>

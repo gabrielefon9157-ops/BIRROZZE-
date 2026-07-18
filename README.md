@@ -15,7 +15,7 @@ BIRROZZE/
 ├── galleria.html       # Galleria Polaroid (drag-and-drop upload)
 ├── perle.html          # Muro delle Perle (post-it masonry)
 ├── oscar.html          # Oscar della Vacanza (ballot cards + voti live)
-├── prossima.html       # Pianificatore prossima tappa
+├── passaggi.html       # Organizza Passaggi (auto, posti, andata/ritorno)
 ├── schema.sql          # Schema SQL per migrazione futura a Supabase
 └── birozze.html        # Versione monolite legacy (v5.6)
 ```

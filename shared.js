@@ -33,6 +33,7 @@
     ],
     nextOpts: [],
     drinkingVotes: [],
+    rides: [],
     elapsed: 0,
     running: false,
     alcoholSplitMode: "uguale",
@@ -659,7 +660,8 @@
         sb.from("oscar_votes").select("*").eq("session_id", sessionId),
         sb.from("proposals").select("*").eq("session_id", sessionId),
         sb.from("proposal_votes").select("*").eq("session_id", sessionId),
-        sb.from("drinking_votes").select("*").eq("session_id", sessionId)
+        sb.from("drinking_votes").select("*").eq("session_id", sessionId),
+        sb.from("rides").select("*").eq("session_id", sessionId).order("created_at", { ascending: true })
       ]);
 
       var sess = results[0].data;
@@ -684,6 +686,7 @@
       var proposalsList = results[8].data || [];
       var proposalVotesList = results[9].data || [];
       var drinkingVotesList = results[10].data || [];
+      var ridesList = results[11].data || [];
 
       var newState = {};
       newState.alcoholSplitMode = sess.alcohol_split_mode;
@@ -732,6 +735,19 @@
       // Drinking Votes
       newState.drinkingVotes = drinkingVotesList.map(function(v) {
         return { voterId: v.voter_id, vote: v.vote };
+      });
+
+      // Passaggi in auto
+      newState.rides = ridesList.map(function(r) {
+        return {
+          id: r.id,
+          driverId: r.driver_id,
+          seats: r.seats,
+          direction: r.direction,
+          note: r.note || "",
+          passengersA: r.passengers_a || [],
+          passengersR: r.passengers_r || []
+        };
       });
 
       // Confronta lo stato per verificare se ci sono cambiamenti
@@ -826,6 +842,22 @@
       for (var i = 0; i < _state.nextOpts.length; i++) {
         var p = _state.nextOpts[i];
         await sb.from("proposals").insert({ id: p.id, session_id: sessionId, label: p.label });
+      }
+
+      // Inserisci Passaggi
+      var localRides = _state.rides || [];
+      for (var i = 0; i < localRides.length; i++) {
+        var r = localRides[i];
+        await sb.from("rides").insert({
+          id: r.id,
+          session_id: sessionId,
+          driver_id: r.driverId,
+          seats: r.seats,
+          direction: r.direction,
+          note: r.note || "",
+          passengers_a: r.passengersA || [],
+          passengers_r: r.passengersR || []
+        });
       }
 
       _lastSyncedState = deepClone(_state);
@@ -1099,6 +1131,50 @@
           await sb.from("drinking_votes").update({
             vote: nv.vote
           }).eq("voter_id", nv.voterId).eq("session_id", sessionId);
+        }
+      }
+
+      // 9. Passaggi in auto (Organizza Passaggi)
+      var oldRides = oldState.rides || [];
+      var newRides = newState.rides || [];
+      var sameList = function(a, b) {
+        return JSON.stringify(a || []) === JSON.stringify(b || []);
+      };
+      // Deletes
+      for (var i = 0; i < oldRides.length; i++) {
+        if (!newRides.find(function(r) { return r.id === oldRides[i].id; })) {
+          await sb.from("rides").delete().eq("id", oldRides[i].id).eq("session_id", sessionId);
+        }
+      }
+      // Inserts / Updates
+      for (var j = 0; j < newRides.length; j++) {
+        var nr = newRides[j];
+        var or_ = oldRides.find(function(r) { return r.id === nr.id; });
+        if (!or_) {
+          await sb.from("rides").insert({
+            id: nr.id,
+            session_id: sessionId,
+            driver_id: nr.driverId,
+            seats: nr.seats,
+            direction: nr.direction,
+            note: nr.note || "",
+            passengers_a: nr.passengersA || [],
+            passengers_r: nr.passengersR || []
+          });
+        } else if (
+          or_.seats !== nr.seats ||
+          or_.direction !== nr.direction ||
+          (or_.note || "") !== (nr.note || "") ||
+          !sameList(or_.passengersA, nr.passengersA) ||
+          !sameList(or_.passengersR, nr.passengersR)
+        ) {
+          await sb.from("rides").update({
+            seats: nr.seats,
+            direction: nr.direction,
+            note: nr.note || "",
+            passengers_a: nr.passengersA || [],
+            passengers_r: nr.passengersR || []
+          }).eq("id", nr.id).eq("session_id", sessionId);
         }
       }
 
@@ -1414,6 +1490,11 @@
     });
     _state.expenses = _state.expenses.filter(function (e) { return (e.splitAmong || []).length > 0; });
     _state.oscars.forEach(function (o) { if (o.votes) delete o.votes[id]; });
+    _state.rides = (_state.rides || []).filter(function (r) { return r.driverId !== id; });
+    _state.rides.forEach(function (r) {
+      r.passengersA = (r.passengersA || []).filter(function (pid) { return pid !== id; });
+      r.passengersR = (r.passengersR || []).filter(function (pid) { return pid !== id; });
+    });
     return save();
   }
 
