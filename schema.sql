@@ -182,6 +182,7 @@ DROP POLICY IF EXISTS "Accesso totale pubblico proposal_votes" ON public.proposa
 DROP POLICY IF EXISTS "Accesso totale pubblico drinking_votes" ON public.drinking_votes;
 DROP POLICY IF EXISTS "Accesso totale pubblico rides" ON public.rides;
 DROP POLICY IF EXISTS "Accesso totale pubblico emails" ON public.emails;
+DROP POLICY IF EXISTS "Solo inserimento emails" ON public.emails;
 
 -- Consenti accesso in lettura/scrittura anonimo pubblico per la vacanza studio
 CREATE POLICY "Accesso totale pubblico sessions" ON public.sessions FOR ALL USING (true) WITH CHECK (true);
