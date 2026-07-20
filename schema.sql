@@ -151,6 +151,23 @@ CREATE TABLE IF NOT EXISTS public.emails (
     last_login TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 14. Registro attività (tracciamento per il report giornaliero admin)
+-- Ogni azione rilevante viene loggata qui (login, aggiunta bevuta/spesa/foto,
+-- voto, passaggio...). NON leggibile dal frontend (nessuna policy SELECT):
+-- solo la Edge Function daily-report, che usa la service_role key e quindi
+-- bypassa RLS, può leggerlo. I membri del gruppo non possono vederlo tra loro.
+CREATE TABLE IF NOT EXISTS public.activity_log (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    session_id TEXT REFERENCES public.sessions(id) ON DELETE SET NULL,
+    actor_email TEXT,
+    actor_name TEXT,
+    action TEXT NOT NULL,       -- es. 'login_password', 'drink_add', 'photo_add', 'oscar_vote'...
+    details JSONB DEFAULT '{}' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON public.activity_log (created_at);
+CREATE INDEX IF NOT EXISTS idx_activity_log_session_id ON public.activity_log (session_id);
+
 -- ============================================================
 -- ABILITAZIONE REALTIME (WebSocket per aggiornamenti live)
 -- ============================================================
@@ -167,6 +184,7 @@ ALTER TABLE public.proposal_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.drinking_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.emails ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.activity_log ENABLE ROW LEVEL SECURITY;
 
 -- Rimozione preventiva delle policy se già esistenti per evitare errori di duplicazione
 DROP POLICY IF EXISTS "Accesso totale pubblico sessions" ON public.sessions;
@@ -183,6 +201,7 @@ DROP POLICY IF EXISTS "Accesso totale pubblico drinking_votes" ON public.drinkin
 DROP POLICY IF EXISTS "Accesso totale pubblico rides" ON public.rides;
 DROP POLICY IF EXISTS "Accesso totale pubblico emails" ON public.emails;
 DROP POLICY IF EXISTS "Solo inserimento emails" ON public.emails;
+DROP POLICY IF EXISTS "Solo inserimento activity_log" ON public.activity_log;
 
 -- Consenti accesso in lettura/scrittura anonimo pubblico per la vacanza studio
 CREATE POLICY "Accesso totale pubblico sessions" ON public.sessions FOR ALL USING (true) WITH CHECK (true);
@@ -199,6 +218,10 @@ CREATE POLICY "Accesso totale pubblico drinking_votes" ON public.drinking_votes 
 CREATE POLICY "Accesso totale pubblico rides" ON public.rides FOR ALL USING (true) WITH CHECK (true);
 -- EMAILS: solo INSERT dal frontend. Lettura/export solo dalla dashboard Supabase.
 CREATE POLICY "Solo inserimento emails" ON public.emails FOR INSERT WITH CHECK (true);
+-- ACTIVITY_LOG: solo INSERT dal frontend. Nessuna policy SELECT: i membri
+-- non possono leggere il log, nemmeno il proprio. Solo la Edge Function
+-- (service_role, bypassa RLS) lo legge per comporre il report giornaliero.
+CREATE POLICY "Solo inserimento activity_log" ON public.activity_log FOR INSERT WITH CHECK (true);
 
 -- Registrazione sicura delle tabelle al canale Realtime di Supabase (evita errori se già presenti)
 DO $$

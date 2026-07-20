@@ -228,6 +228,28 @@
     try { localStorage.setItem(AUTH_KEY, JSON.stringify(profile)); } catch (e) {}
   }
 
+  /* Traccia un'azione per il report giornaliero admin (best-effort, mai
+     bloccante: se fallisce non deve interrompere l'azione dell'utente).
+     Non c'è policy SELECT su activity_log: solo la Edge Function con la
+     service_role key può leggerla. */
+  function logActivity(action, details) {
+    whenCloudReady(function () {
+      if (!sb) return;
+      var auth = getAuthProfile();
+      try {
+        sb.from("activity_log").insert({
+          session_id: getActiveGroupId() || null,
+          actor_email: (auth && auth.email) || null,
+          actor_name: (auth && auth.name) || null,
+          action: action,
+          details: details || {}
+        }).then(function (res) {
+          if (res.error) console.warn("[Birrozze] logActivity:", res.error);
+        });
+      } catch (e) {}
+    });
+  }
+
   function isValidEmail(s) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || "").trim());
   }
@@ -286,6 +308,7 @@
       };
       setAuthProfile(profile);
       recordEmail(profile);
+      logActivity("login_password", {});
       return { ok: true, profile: profile };
     } catch (e) {
       return { ok: false, error: "Errore di rete durante l'accesso. Riprova." };
@@ -317,6 +340,7 @@
         // Conferma email disattivata sulla dashboard: si entra subito
         setAuthProfile(profile);
         recordEmail(profile);
+        logActivity("signup", {});
         return { ok: true, profile: profile };
       }
       // Conferma email attiva: l'utente deve cliccare il link ricevuto
@@ -413,6 +437,7 @@
     var profile = { email: email, name: name, provider: "google-mock", ts: Date.now() };
     setAuthProfile(profile);
     recordEmail(profile);
+    logActivity("login_google_mock", {});
     return { ok: true, profile: profile, mocked: true };
   }
 
@@ -438,6 +463,7 @@
         };
         setAuthProfile(profile);
         recordEmail(profile);
+        logActivity("login_google", {});
         return profile;
       }
     } catch (e) {
@@ -581,6 +607,7 @@
         var prof = getAuthProfile();
         if (prof) { prof.avatarUrl = finalUrl; setAuthProfile(prof); }
         var ok = save();
+        logActivity("change_avatar", {});
         if (cb) cb(ok, finalUrl);
       });
     });
@@ -626,6 +653,7 @@
       return false;
     }
     try { localStorage.setItem(GROUP_NAME_KEY, newName); } catch (e) {}
+    logActivity("rename_group", { name: newName });
     return true;
   }
 
@@ -677,6 +705,7 @@
     _state.crew.push({ id: newId, name: name, drinks: {}, is_active: true, avatar: null });
     setActiveProfileId(newId);
     save();
+    logActivity("join_group", { name: name });
 
     toast("Benvenuto " + name + "! Il tuo profilo è attivo.");
     if (callback) callback();
@@ -1391,6 +1420,7 @@
             promptForProfile();
           });
           subscribeRealtime(joinCode);
+          logActivity("join_group_link", { code: joinCode });
           toast("Connesso al gruppo " + joinCode + "!");
         }
       });
@@ -1545,6 +1575,7 @@
         promptForProfile();
       });
       subscribeRealtime(code);
+      logActivity("connect_group", { code: code });
       toast("Connesso al gruppo " + code + "!");
     });
 
@@ -1561,10 +1592,11 @@
       var code = "GRP-" + uid().toUpperCase().slice(0, 4);
       setActiveGroupId(code);
       await createSupabaseSession(code);
-      
+
       updatePill();
       closeModal();
       subscribeRealtime(code);
+      logActivity("create_group", { code: code });
       promptForProfile();
       
       btn.disabled = false;
@@ -1592,6 +1624,7 @@
     // Disconnetti gruppo
     document.getElementById("disconnectGroup").addEventListener("click", function() {
       if (confirm("Scollegarsi dal gruppo condiviso e tornare in modalità offline locale?")) {
+        logActivity("leave_group", { code: getActiveGroupId() });
         setActiveGroupId(null);
         if (realtimeChannel) {
           realtimeChannel.unsubscribe();
@@ -1645,6 +1678,9 @@
   /* Rimuove un membro e tutti i suoi riferimenti (spese, voti)
      per non lasciare conti orfani nei settlements */
   function removeCrewMember(id) {
+    var removed = null;
+    _state.crew.forEach(function (p) { if (p.id === id) removed = p; });
+    logActivity("remove_member", { name: removed ? removed.name : id });
     _state.crew = _state.crew.filter(function (p) { return p.id !== id; });
     _state.expenses = _state.expenses.filter(function (e) { return e.paidBy !== id; });
     _state.expenses.forEach(function (e) {
@@ -1958,7 +1994,8 @@
     whenCloudReady:       whenCloudReady,
     getActiveGroupName:   getActiveGroupName,
     updateGroupName:      updateGroupName,
-    downloadEmailsFile:   downloadEmailsFile
+    downloadEmailsFile:   downloadEmailsFile,
+    logActivity:          logActivity
   };
 
 })(window);

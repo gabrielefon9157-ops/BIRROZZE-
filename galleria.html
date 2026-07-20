@@ -447,6 +447,7 @@
           // invece di mostrare una foto che sparirebbe al prossimo ricaricamento
           if (BS.save()) {
             renderWall();
+            BS.logActivity("photo_add", { caption: caption });
             BS.toast(cloudOk ? "Foto sul cloud e appesa al muro! ☁️" : "Foto appesa al muro!");
           } else {
             state.photos.shift();
@@ -486,6 +487,7 @@
           var state = BS.get();
           state.photos = state.photos.filter(function (p) { return p.id !== id; });
           BS.save();
+          BS.logActivity("photo_remove", {});
           renderWall();
         }
         return;

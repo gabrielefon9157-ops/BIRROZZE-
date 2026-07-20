@@ -459,6 +459,7 @@
 
       state.expenses.push({ id: BS.uid(), desc: desc, amount: amount, paidBy: payer, splitAmong: activePids });
       BS.save();
+      BS.logActivity("expense_add", { desc: desc, amount: amount });
       document.getElementById("expDesc").value = "";
       document.getElementById("expAmount").value = "";
       renderExpenseTable();
@@ -477,6 +478,7 @@
         if (!confirm('Eliminare la spesa "' + desc + '"?')) return;
         state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
         BS.save();
+        BS.logActivity("expense_remove", { desc: desc });
         renderExpenseTable();
         renderDebts();
         BS.toast("Spesa eliminata.");

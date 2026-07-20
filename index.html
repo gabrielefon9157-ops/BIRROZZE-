@@ -1280,6 +1280,7 @@
         state.drinkingVotes.push({ voterId: voterId, vote: voteValue });
       }
       BS.save();
+      BS.logActivity("drinking_vote", { vote: voteValue });
       renderPoll();
     }
 

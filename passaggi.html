@@ -542,6 +542,7 @@
             passengersR: []
           });
           BS.save();
+          BS.logActivity("ride_offer", { seats: draftSeats, direction: draftDirection });
           renderAll();
           BS.toast("Passaggio offerto: " + DIR_LABEL[draftDirection].toLowerCase() + ", " + draftSeats + " posti 🚗");
         });
@@ -630,6 +631,7 @@
         var s = BS.get();
         s.rides = s.rides.filter(function (r) { return r.id !== mine.id; });
         BS.save();
+        BS.logActivity("ride_withdraw", {});
         renderAll();
         BS.toast("Offerta ritirata.");
       });
@@ -767,6 +769,7 @@
         var idx = arr.indexOf(me);
         if (idx > -1) arr.splice(idx, 1);
         BS.save();
+        BS.logActivity("ride_unbook", { leg: leg, driver: getName(target.driverId) });
         renderAll();
         BS.toast("Sei sceso dall'auto di " + getName(target.driverId) + " (" + leg + ").");
         return;
@@ -784,6 +787,7 @@
       });
       legArr(target, leg).push(me);
       BS.save();
+      BS.logActivity("ride_book", { leg: leg, driver: getName(target.driverId), switched: switched });
       renderAll();
       BS.toast((switched ? "Cambio auto! " : "") + "Posto prenotato con " + getName(target.driverId) + " (" + leg + ") 🚗");
     });

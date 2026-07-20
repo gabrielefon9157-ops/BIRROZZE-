@@ -369,17 +369,20 @@
     /* ---- Helper per votare ---- */
     function voteOscar(oscarId, candId, voterId) {
       var state = BS.get();
+      var oscarTitle = "";
       state.oscars.forEach(function (o) {
         if (o.id === oscarId) {
           o.votes[voterId] = candId;
+          oscarTitle = o.title;
         }
       });
       BS.save();
       renderOscars();
       renderStats();
-      
+
       var name = "";
       state.crew.forEach(function (p) { if (p.id === candId) name = p.name; });
+      BS.logActivity("oscar_vote", { category: oscarTitle, candidate: name });
       BS.toast("Hai votato per " + name + "!");
     }
 
@@ -452,6 +455,7 @@
       var state = BS.get();
       state.oscars.push({ id: BS.uid(), title: val, votes: {} });
       BS.save();
+      BS.logActivity("oscar_category_add", { title: val });
       document.getElementById("newOscarInput").value = "";
       renderOscars();
       renderStats();

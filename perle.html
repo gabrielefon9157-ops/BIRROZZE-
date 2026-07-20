@@ -315,6 +315,7 @@
         rot:    (Math.random() * 7 - 3.5).toFixed(1)
       });
       BS.save();
+      BS.logActivity("perla_add", { author: auth });
       document.getElementById("perlaText").value   = "";
       document.getElementById("perlaAuthor").value = "";
       renderWall();
@@ -328,6 +329,7 @@
         var state = BS.get();
         state.perle = state.perle.filter(function (p) { return p.id !== id; });
         BS.save();
+        BS.logActivity("perla_remove", {});
         renderWall();
       }
     });

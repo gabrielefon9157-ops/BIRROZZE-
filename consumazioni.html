@@ -607,6 +607,7 @@
 
       person.drinks[did] = (person.drinks[did] || 0) + 1;
       BS.save();
+      BS.logActivity("drink_add", { drink: drink.name, price: drink.price });
       renderPersonSelector();
       renderRecap();
       BS.toast("+" + drink.name + " aggiunto al conto di " + person.name);
@@ -641,15 +642,20 @@
       if (inc) {
         var didUp = inc.getAttribute("data-inc");
         person.drinks[didUp] = (person.drinks[didUp] || 0) + 1;
+        var dUp = BS.getDrinkById(didUp);
+        BS.logActivity("drink_add", { drink: dUp ? dUp.name : didUp });
       } else if (dec) {
         var didDown = dec.getAttribute("data-dec");
         if (person.drinks[didDown] > 1) person.drinks[didDown] -= 1;
         else delete person.drinks[didDown];
+        var dDown = BS.getDrinkById(didDown);
+        BS.logActivity("drink_remove", { drink: dDown ? dDown.name : didDown });
       } else if (del) {
         var didDel = del.getAttribute("data-del");
         var drink = BS.getDrinkById(didDel);
         if (!confirm("Togliere " + (drink ? drink.name : "questa voce") + " dal conto di " + person.name + "?")) return;
         delete person.drinks[didDel];
+        BS.logActivity("drink_remove", { drink: drink ? drink.name : didDel });
       }
 
       BS.save();
