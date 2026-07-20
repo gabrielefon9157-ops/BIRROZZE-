@@ -122,6 +122,7 @@
       </div>
       <button type="submit" class="login-submit" id="emailLoginBtn">Accedi</button>
       <button type="button" class="login-mode-toggle" id="modeToggle">Non hai un account? <b>Registrati</b></button>
+      <button type="button" class="login-mode-toggle" id="forgotBtn">Password dimenticata? <b>Recuperala</b></button>
     </form>
 
     <div class="login-divider" aria-hidden="true">oppure</div>
@@ -153,7 +154,11 @@
     "use strict";
     var BS = window.BirrozzeState;
 
-    if (BS.getAuthProfile()) { location.replace("index.html"); return; }
+    /* Rientro dal link "recupera password": il fragment va letto SUBITO,
+       prima che l'SDK Supabase lo consumi e ripulisca l'URL */
+    var isRecovery = /type=recovery/.test(location.hash);
+
+    if (BS.getAuthProfile() && !isRecovery) { location.replace("index.html"); return; }
 
     BS.whenCloudReady(function () {
       BS.completeOAuthLogin().then(function (profile) {
@@ -208,6 +213,34 @@
     document.getElementById("modeToggle").addEventListener("click", function () { isSignup = !isSignup; clearError(); applyMode(); });
     applyMode();
 
+    /* Modalità recupero: si imposta solo la nuova password */
+    if (isRecovery) {
+      document.getElementById("loginEmail").closest(".field").style.display = "none";
+      document.getElementById("loginEmail").required = false;
+      document.getElementById("nameField").style.display = "none";
+      document.getElementById("modeToggle").style.display = "none";
+      document.getElementById("forgotBtn").style.display = "none";
+      document.getElementById("googleLoginBtn").style.display = "none";
+      document.querySelector(".login-divider").style.display = "none";
+      document.querySelector('label[for="loginPassword"]').textContent = "Nuova password";
+      document.getElementById("loginPassword").setAttribute("autocomplete", "new-password");
+      document.getElementById("emailLoginBtn").textContent = "Imposta nuova password";
+      showError("Bentornato! Scegli la tua nuova password qui sotto.", true);
+    }
+
+    /* Invio email di recupero password */
+    document.getElementById("forgotBtn").addEventListener("click", function () {
+      clearError();
+      var btn = this; btn.disabled = true;
+      BS.whenCloudReady(function () {
+        BS.resetPassword(document.getElementById("loginEmail").value).then(function (res) {
+          btn.disabled = false;
+          if (res.ok) showError("Email inviata! Apri il link che trovi nella tua casella per scegliere una nuova password.", true);
+          else showError(res.error);
+        }).catch(function () { btn.disabled = false; showError("Errore imprevisto. Riprova."); });
+      });
+    });
+
     function applyAvatarAfterLogin(callback) {
       if (!_pendingAvatarFile) { callback(); return; }
       BS.setMyAvatar(_pendingAvatarFile, function () { callback(); });
@@ -217,6 +250,19 @@
       e.preventDefault(); clearError();
       var btn = document.getElementById("emailLoginBtn");
       btn.disabled = true;
+
+      if (isRecovery) {
+        BS.whenCloudReady(function () {
+          BS.updatePassword(document.getElementById("loginPassword").value).then(function (res) {
+            btn.disabled = false;
+            if (!res.ok) { showError(res.error); return; }
+            BS.toast("Password aggiornata! 🍺");
+            setTimeout(function () { location.replace("index.html"); }, 380);
+          }).catch(function () { btn.disabled = false; showError("Errore imprevisto. Riprova."); });
+        });
+        return;
+      }
+
       BS.whenCloudReady(function () {
         var email = document.getElementById("loginEmail").value;
         var pass  = document.getElementById("loginPassword").value;
@@ -248,7 +294,7 @@
           btn.disabled = false;
           if (res.ok) {
             applyAvatarAfterLogin(function () {
-              BS.toast(res.mocked ? "Accesso Google simulato V" : "Benvenuto, " + res.profile.name + "! 🍺");
+              BS.toast(res.mocked ? "Accesso Google simulato ✓" : "Benvenuto, " + res.profile.name + "! 🍺");
               setTimeout(function () { location.replace("index.html"); }, 380);
             });
           } else { showError(res.error); }

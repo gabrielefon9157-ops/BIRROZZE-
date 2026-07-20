@@ -138,6 +138,8 @@
       z-index: 20;
     }
     .polaroid-card:hover .polaroid-remove { opacity: 1; }
+    /* Sui touch screen non esiste l'hover: il pulsante resta visibile */
+    @media (hover: none) { .polaroid-remove { opacity: .65; } }
 
     .wall-empty {
       text-align: center;
@@ -430,30 +432,47 @@
       btn.textContent = "Compressione...";
 
       BS.compressImageFile(pendingFile, function (dataUrl) {
-        var state = BS.get();
-        state.photos.unshift({
-          id: BS.uid(),
-          url: dataUrl,
-          caption: caption,
-          author: author,
-          rot: (Math.random() * 8 - 4).toFixed(1)
-        });
-        // Se la memoria è piena il salvataggio fallisce: annulla l'aggiunta
-        // invece di mostrare una foto che sparirebbe al prossimo ricaricamento
-        if (BS.save()) {
-          renderWall();
-          BS.toast("Foto appesa al muro!");
-        } else {
-          state.photos.shift();
-          alert("Memoria del browser piena: la foto NON è stata salvata.\nElimina qualche Polaroid vecchia e riprova.");
+        var photoId = BS.uid();
+
+        function finish(url, cloudOk) {
+          var state = BS.get();
+          state.photos.unshift({
+            id: photoId,
+            url: url,
+            caption: caption,
+            author: author,
+            rot: (Math.random() * 8 - 4).toFixed(1)
+          });
+          // Se la memoria è piena il salvataggio fallisce: annulla l'aggiunta
+          // invece di mostrare una foto che sparirebbe al prossimo ricaricamento
+          if (BS.save()) {
+            renderWall();
+            BS.toast(cloudOk ? "Foto sul cloud e appesa al muro! ☁️" : "Foto appesa al muro!");
+          } else {
+            state.photos.shift();
+            alert("Memoria del browser piena: la foto NON è stata salvata.\nElimina qualche Polaroid vecchia e riprova.");
+          }
+
+          pendingFile = null;
+          document.getElementById("photoInput").value = "";
+          document.getElementById("uploadPrompt").style.display = "block";
+          document.getElementById("previewWrap").style.display = "none";
+          btn.disabled = false;
+          btn.textContent = "Appendi al Muro";
         }
 
-        pendingFile = null;
-        document.getElementById("photoInput").value = "";
-        document.getElementById("uploadPrompt").style.display = "block";
-        document.getElementById("previewWrap").style.display = "none";
-        btn.disabled = false;
-        btn.textContent = "Appendi al Muro";
+        // Connessi al gruppo: carica PRIMA sul bucket e salva solo l'URL.
+        // Così gli altri la vedono sempre (le righe base64 giganti non
+        // passano dal Realtime) e la memoria locale non si riempie.
+        if (BS.isConnected()) {
+          btn.textContent = "Caricamento sul cloud...";
+          BS.uploadPhotoDataUrl(dataUrl, photoId, function (publicUrl) {
+            if (!publicUrl) BS.toast("Cloud non raggiungibile: foto salvata in locale.");
+            finish(publicUrl || dataUrl, !!publicUrl);
+          });
+        } else {
+          finish(dataUrl, false);
+        }
       });
     });
 

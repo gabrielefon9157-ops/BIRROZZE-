@@ -327,6 +327,49 @@
     }
   }
 
+  /* Invia l'email di recupero password: il link riporta a login.html
+     con type=recovery nel fragment, dove si imposta la nuova password */
+  async function resetPassword(email) {
+    email = String(email || "").trim().toLowerCase();
+    if (!isValidEmail(email)) return { ok: false, error: "Scrivi la tua email nel campo qui sopra, poi ripremi “Password dimenticata?”." };
+    if (!sb) return { ok: false, error: "Connessione al server non disponibile. Riprova tra qualche secondo." };
+    try {
+      var res = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: location.origin + location.pathname
+      });
+      if (res.error) return { ok: false, error: res.error.message };
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: "Errore di rete durante l'invio dell'email. Riprova." };
+    }
+  }
+
+  /* Imposta la nuova password dopo il rientro dal link di recupero */
+  async function updatePassword(newPass) {
+    if (!newPass || newPass.length < 6) return { ok: false, error: "La password deve avere almeno 6 caratteri." };
+    if (!sb) return { ok: false, error: "Connessione al server non disponibile. Riprova tra qualche secondo." };
+    try {
+      var res = await sb.auth.updateUser({ password: newPass });
+      if (res.error) return { ok: false, error: res.error.message };
+      var u = res.data && res.data.user;
+      if (u && u.email) {
+        var meta = u.user_metadata || {};
+        var profile = {
+          email: u.email.toLowerCase(),
+          name: meta.display_name || meta.full_name || u.email.split("@")[0],
+          provider: "password",
+          ts: Date.now()
+        };
+        setAuthProfile(profile);
+        recordEmail(profile);
+        return { ok: true, profile: profile };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: "Errore di rete durante il cambio password. Riprova." };
+    }
+  }
+
   /* Verifica dalla API pubblica di Supabase se il provider Google è abilitato */
   async function isGoogleConfigured() {
     try {
@@ -346,14 +389,18 @@
     var configured = sb ? await isGoogleConfigured() : false;
 
     if (configured) {
+      // Provider attivo sulla dashboard: usa SOLO l'OAuth reale e, se
+      // fallisce, mostra l'errore vero invece di ripiegare sul mock
+      // (il fallback silenzioso mascherava i problemi di configurazione)
       try {
         var res = await sb.auth.signInWithOAuth({
           provider: "google",
           options: { redirectTo: location.origin + location.pathname }
         });
         if (!res.error) return { ok: true, redirecting: true };
+        return { ok: false, error: "Google ha rifiutato l'accesso: " + (res.error.message || "errore sconosciuto") + ". Verifica su Supabase che l'URL di questa pagina sia tra i Redirect URLs consentiti." };
       } catch (e) {
-        console.warn("[Birrozze] OAuth Google fallito, uso il mock:", e);
+        return { ok: false, error: "Errore di rete durante l'accesso Google. Riprova." };
       }
     }
 
@@ -361,7 +408,7 @@
     var email = String(fallbackEmail || "").trim().toLowerCase();
     var name  = String(fallbackName || "").trim() || "Utente Google";
     if (!isValidEmail(email)) {
-      return { ok: false, error: "Provider Google non configurato su Supabase: compila l'email qui sopra per l'accesso simulato di test." };
+      return { ok: false, error: "Il login Google non è ancora configurato su Supabase (Authentication → Providers → Google). Nel frattempo puoi entrare con email e password, oppure scrivere la tua email qui sopra per un accesso Google simulato di prova." };
     }
     var profile = { email: email, name: name, provider: "google-mock", ts: Date.now() };
     setAuthProfile(profile);
@@ -377,6 +424,11 @@
       var session = res.data && res.data.session;
       if (session && session.user && session.user.email) {
         var u = session.user;
+        // Auto-login SOLO per sessioni Google: una sessione password
+        // residua non deve riloggare da sola chi è sulla pagina di accesso
+        var appMeta = u.app_metadata || {};
+        var sessProvider = appMeta.provider || (appMeta.providers && appMeta.providers[0]) || "";
+        if (sessProvider !== "google") return null;
         var meta = u.user_metadata || {};
         var profile = {
           email: u.email.toLowerCase(),
@@ -401,8 +453,20 @@
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
     setActiveGroupId(null);
     setActiveProfileId(null);
+    // Rimuovi SUBITO il token Supabase Auth dal localStorage: la signOut di
+    // rete può essere annullata dalla navigazione e il token superstite
+    // ri-loggherebbe in automatico il vecchio utente alla prossima visita
+    try {
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf("sb-") === 0 && k.indexOf("-auth-token") !== -1) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch (e) {}
     if (sb && sb.auth) { try { sb.auth.signOut(); } catch (e) {} }
-    location.href = "login.html";
+    // Un piccolo respiro per lasciare partire la revoca lato server
+    setTimeout(function () { location.href = "login.html"; }, 200);
   }
 
   /* Vero solo per l'amministratore configurato in config.js */
@@ -471,7 +535,19 @@
       var myId = getActiveProfileId();
       var me = null;
       _state.crew.forEach(function (p) { if (p.id === myId) me = p; });
-      if (!me) { if (cb) cb(false); return; }
+      if (!me) {
+        // Nessun profilo crew (es. appena registrato, non ancora in un
+        // gruppo): salva l'avatar compresso nel profilo account, così la
+        // navbar lo mostra e non va perso in silenzio
+        compressSquare(file, 200, 0.72, function (dataUrl) {
+          var prof = getAuthProfile();
+          if (!prof) { if (cb) cb(false); return; }
+          prof.avatarUrl = dataUrl;
+          setAuthProfile(prof);
+          if (cb) cb(true, dataUrl);
+        });
+        return;
+      }
 
       compressSquare(file, 200, 0.72, async function (dataUrl) {
         var oldUrl = me.avatar || "";
@@ -500,10 +576,37 @@
         }
 
         me.avatar = finalUrl;
+        // Specchia l'avatar anche nel profilo account: resta visibile in
+        // navbar anche cambiando gruppo o dopo un disconnect
+        var prof = getAuthProfile();
+        if (prof) { prof.avatarUrl = finalUrl; setAuthProfile(prof); }
         var ok = save();
         if (cb) cb(ok, finalUrl);
       });
     });
+  }
+
+  /* Carica subito una foto sul bucket Storage e restituisce l'URL pubblico.
+     Usato dalla galleria quando si è connessi: nel DB finisce solo l'URL,
+     mai il base64 (le righe enormi rompono il Realtime e la quota locale). */
+  async function uploadPhotoDataUrl(dataUrl, id, cb) {
+    if (!isConnected()) { if (cb) cb(null); return; }
+    try {
+      var blob = dataURLtoBlob(dataUrl);
+      var fileName = getActiveGroupId() + "/" + id + ".jpg";
+      var up = await sb.storage.from("birozze_photos")
+        .upload(fileName, blob, { contentType: "image/jpeg", cacheControl: "3600", upsert: true });
+      if (up.error) {
+        console.warn("[Birrozze] uploadPhotoDataUrl:", up.error);
+        if (cb) cb(null);
+        return;
+      }
+      var pub = sb.storage.from("birozze_photos").getPublicUrl(fileName);
+      if (cb) cb((pub.data && pub.data.publicUrl) || null);
+    } catch (e) {
+      console.warn("[Birrozze] uploadPhotoDataUrl:", e);
+      if (cb) cb(null);
+    }
   }
 
   /* ---- Nome personalizzato del gruppo ---- */
@@ -592,6 +695,7 @@
       console.error("[BirrozzeState] Errore nel caricamento locale:", e);
       _state = deepClone(DEFAULT_STATE);
     }
+    applyPriceOverlay();
 
     // 2. Se connesso a Supabase, la sincronizzazione asincrona aggiornerà lo stato
     var gid = getActiveGroupId();
@@ -604,23 +708,25 @@
   }
 
   function save() {
+    var localOk = true;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(_state));
       _quotaWarned = false;
-      
-      // Se connesso, esegui il diff verso Supabase
-      if (isConnected()) {
-        syncDiff();
-      }
-      return true;
     } catch (e) {
+      // La quota localStorage piena NON deve bloccare la sincronizzazione:
+      // il cloud è la fonte di verità, la cache locale è solo un comfort
+      localOk = false;
       console.error("[BirrozzeState] Errore nel salvataggio locale:", e);
       if (!_quotaWarned) {
         _quotaWarned = true;
         try { toast("Spazio locale esaurito!"); } catch (_) {}
       }
-      return false;
     }
+    if (isConnected()) {
+      syncDiff();
+      return true;
+    }
+    return localOk;
   }
 
   function get() { return _state; }
@@ -750,19 +856,69 @@
         };
       });
 
-      // Confronta lo stato per verificare se ci sono cambiamenti
+      // I prezzi personalizzati vivono solo in locale: vanno preservati
+      newState.prices = _state.prices || {};
+
+      // Lo snapshot del cloud diventa il riferimento per i prossimi diff
+      _lastSyncedState = deepClone(newState);
+
+      // PRESERVA le aggiunte locali non ancora arrivate sul cloud: senza
+      // questo, un evento realtime durante il sync le cancellerebbe
+      // (foto appena scattate che "spariscono")
+      var hasPending = mergePendingLocalAdds(newState);
+
       var stateChanged = JSON.stringify(_state) !== JSON.stringify(newState);
       _state = newState;
-      _lastSyncedState = deepClone(_state);
-      
-      // Salva copia cache locale
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(_state));
+      applyPriceOverlay();
+
+      // La cache locale è best-effort: se la quota è piena NON deve
+      // impedire l'aggiornamento della UI
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_state)); } catch (e) {}
 
       if (stateChanged) {
         triggerStateChangeEvent();
       }
+      if (hasPending && isConnected()) {
+        syncDiff();
+      }
     } catch (e) {
       console.error("[Birrozze] Errore durante il recupero da Supabase:", e);
+    }
+  }
+
+  /* Ritrova negli array dello stato locale gli elementi aggiunti ma non
+     ancora sincronizzati (presenti in _state ma non in _lastSyncedState
+     né nel nuovo stato cloud) e li reinserisce nel nuovo stato. */
+  function mergePendingLocalAdds(newState) {
+    var keys = ["photos", "perle", "expenses", "rides", "nextOpts", "crew"];
+    var found = false;
+    keys.forEach(function (key) {
+      var syncedIds = {};
+      ((_lastSyncedState && _lastSyncedState[key]) || []).forEach(function (x) {
+        if (x && x.id) syncedIds[x.id] = true;
+      });
+      var cloudIds = {};
+      (newState[key] || []).forEach(function (x) {
+        if (x && x.id) cloudIds[x.id] = true;
+      });
+      ((_state && _state[key]) || []).forEach(function (x) {
+        if (x && x.id && !syncedIds[x.id] && !cloudIds[x.id]) {
+          // Foto e perle sono mostrate dalla più recente: rimettile in testa
+          if (key === "photos" || key === "perle") newState[key].unshift(x);
+          else newState[key].push(x);
+          found = true;
+        }
+      });
+    });
+    return found;
+  }
+
+  /* Riapplica al catalogo i prezzi personalizzati salvati nello stato */
+  function applyPriceOverlay() {
+    var overlay = _state.prices || {};
+    for (var pid in overlay) {
+      var d = getDrinkById(pid);
+      if (d) d.price = overlay[pid];
     }
   }
 
@@ -1196,11 +1352,17 @@
         loadFromSupabase(sessionId).then(function() {
           // Ricarica per allineare la UI solo se l'utente non sta scrivendo
           if (document.activeElement && (
-            document.activeElement.tagName === "INPUT" || 
-            document.activeElement.tagName === "SELECT" || 
+            document.activeElement.tagName === "INPUT" ||
+            document.activeElement.tagName === "SELECT" ||
             document.activeElement.tagName === "TEXTAREA"
           )) {
-            return; 
+            return;
+          }
+          // Niente reload mentre l'utente guarda una foto o ha un modal
+          // aperto: l'evento birrozzeStateChange ha già aggiornato le
+          // pagine che lo ascoltano, il reload chiuderebbe tutto in faccia
+          if (document.querySelector(".lightbox-overlay.open, .birozze-modal-overlay.open, .nav-user-dropdown.open")) {
+            return;
           }
           location.reload();
         });
@@ -1723,7 +1885,7 @@
     reader.onload = function (evt) {
       var img = new Image();
       img.onload = function () {
-        var MAX = 500, q = 0.68;
+        var MAX = 800, q = 0.7;
         var w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round((h * MAX) / w); w = MAX; }
@@ -1777,9 +1939,10 @@
     getActiveProfileId:   getActiveProfileId,
     setActiveProfileId:   setActiveProfileId,
     promptForProfile:     promptForProfile,
-    /* Avatar */
+    /* Avatar e foto */
     setMyAvatar:          setMyAvatar,
     getMyAvatar:          getMyAvatar,
+    uploadPhotoDataUrl:   uploadPhotoDataUrl,
     /* Autenticazione e gruppi */
     isConnected:          isConnected,
     getAuthProfile:       getAuthProfile,
@@ -1787,6 +1950,8 @@
     signInWithEmail:      signInWithEmail,
     signInWithPassword:   signInWithPassword,
     signUpWithPassword:   signUpWithPassword,
+    resetPassword:        resetPassword,
+    updatePassword:       updatePassword,
     signInWithGoogle:     signInWithGoogle,
     completeOAuthLogin:   completeOAuthLogin,
     logout:               logout,
